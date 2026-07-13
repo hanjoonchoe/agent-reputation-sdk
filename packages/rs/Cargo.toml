@@ -1,0 +1,42 @@
+[package]
+name = "alloy-agent-reputation"
+version = "0.1.0-alpha.0"
+edition = "2021"
+license = "MIT"
+description = "ERC-8004 read-only facts layer (alloy provider extension) + a pure, policy-driven reputation calculator."
+repository = "https://github.com/hanjoonchoe/agent-reputation-sdk"
+readme = "README.md"
+keywords = ["ethereum", "alloy", "erc-8004", "reputation", "web3"]
+
+[dependencies]
+# Facts layer: alloy provider extension trait + sol! typed contract interfaces.
+alloy = { version = "2", default-features = false, features = [
+    "std",
+    "provider-http",
+    "reqwest",
+    "reqwest-rustls-tls",
+    "contract",
+    "sol-types",
+    "json",
+] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+# Registration-file fetch (facts layer only; the calculator has zero I/O dependencies).
+# reqwest chosen over rolling a raw hyper client: alloy already pulls in a Tower/hyper
+# stack for its own HTTP transport, but exposes no general-purpose "fetch arbitrary URL
+# with a byte cap and timeout" helper, so this is a deliberate, minimal addition (one
+# crate) rather than hand-writing byte-capped-streaming HTTP twice in two ecosystems.
+# rustls (not native-tls/openssl) to avoid a system OpenSSL dependency in a portable
+# library crate.
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+sha2 = "0.10"
+hex = "0.4"
+base64 = "0.22"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+
+[[example]]
+name = "vet_agent"
+path = "examples/vet_agent.rs"
