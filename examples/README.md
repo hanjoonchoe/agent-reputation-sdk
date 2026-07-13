@@ -1,5 +1,16 @@
 # Examples
 
+The same pre-delegation guard, in all three languages — pick your stack:
+
+| Language   | Location                                                                       | Run                                                                  |
+| ---------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| TypeScript | [`ts/vet-agent.ts`](ts/vet-agent.ts)                                           | `npx tsx examples/ts/vet-agent.ts 1`                                 |
+| Python     | [`../packages/py/examples/vet_agent.py`](../packages/py/examples/vet_agent.py) | `cd packages/py && uv run python examples/vet_agent.py --agent-id 1` |
+| Rust       | [`../packages/rs/examples/vet_agent.rs`](../packages/rs/examples/vet_agent.rs) | `cd packages/rs && cargo run --example vet_agent -- 1`               |
+
+(Python/Rust examples live inside their packages per each ecosystem's convention —
+`cargo run --example` requires it; this page is the index.)
+
 ## `ts/vet-agent.ts` — pre-delegation guard
 
 A ~50-line runnable script showing the intended shape of a real pre-delegation check:
