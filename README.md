@@ -1,12 +1,12 @@
-# erc8004
+# agent-reputation-sdk
 
 **Ethereum SDK extensions for [ERC-8004: Trustless Agents](https://eips.ethereum.org/EIPS/eip-8004)** — typed registry reads plus a policy-driven reputation calculator, as extensions to each ecosystem's canonical Ethereum SDK:
 
 | Language | Host SDK | Package | Status |
 | -------- | -------------------------------- | --------------- | ------- |
-| TypeScript | [viem](https://viem.sh) actions | `erc8004` (npm) | planned |
-| Python | [web3.py](https://web3py.readthedocs.io) external module | `erc8004` (PyPI) | planned |
-| Rust | [alloy](https://alloy.rs) extension trait | `alloy-erc8004` | planned |
+| TypeScript | [viem](https://viem.sh) actions | `agent-reputation` (npm) | planned |
+| Python | [web3.py](https://web3py.readthedocs.io) external module | `web3-agent-reputation` (PyPI) | planned |
+| Rust | [alloy](https://alloy.rs) extension trait | `alloy-agent-reputation` (crates) | planned |
 
 ## The two-layer contract (identical in every language)
 
@@ -36,7 +36,7 @@ const rep = calculateReputation(feedback, { witnessCap: 1, credibility: activity
 
 ## Status
 
-Pre-alpha: design complete, implementation starting. The npm/PyPI names are reserved for this project.
+Pre-alpha: design complete, implementation starting. Package names follow each host ecosystem's convention (unprefixed for viem culture, host-prefixed for web3.py/alloy).
 
 ## License
 
