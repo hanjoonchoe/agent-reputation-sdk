@@ -23,3 +23,11 @@ export {
   RpcError,
 } from "./errors.js";
 export type { RegistrationFileSource } from "./fetcher/fetch.js";
+export {
+  activitySqrt,
+  calculateReputation,
+  uniform,
+  type FeedbackEntry as CalculatorFeedbackEntry,
+  type Policy,
+  type Reputation,
+} from "./calculator/index.js";

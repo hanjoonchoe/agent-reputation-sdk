@@ -17,8 +17,25 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
+  "keywords": [
+    "erc-8004",
+    "trustless-agents",
+    "reputation",
+    "viem",
+    "ethereum",
+    "ai-agents"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hanjoonchoe/agent-reputation-sdk.git",
+    "directory": "packages/ts"
+  },
+  "homepage": "https://github.com/hanjoonchoe/agent-reputation-sdk#readme",
+  "bugs": "https://github.com/hanjoonchoe/agent-reputation-sdk/issues",
+  "license": "MIT",
   "scripts": {
     "build": "tsc -p tsconfig.json && mkdir -p dist/registry/abi && cp src/registry/abi/*.json dist/registry/abi/",
     "typecheck": "tsc --noEmit",
