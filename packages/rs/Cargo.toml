@@ -18,6 +18,7 @@ alloy = { version = "2", default-features = false, features = [
     "contract",
     "sol-types",
     "json",
+    "rpc-types",
 ] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -29,13 +30,18 @@ thiserror = "2"
 # crate) rather than hand-writing byte-capped-streaming HTTP twice in two ecosystems.
 # rustls (not native-tls/openssl) to avoid a system OpenSSL dependency in a portable
 # library crate.
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
 sha2 = "0.10"
 hex = "0.4"
 base64 = "0.22"
+# Mid-stream byte-cap enforcement in fetch.rs (`bytes_stream()` + `StreamExt::next`),
+# mirroring the TS/py ports' streaming-abort behavior rather than buffering the whole
+# response before checking size.
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+wiremock = "0.6"
 
 [[example]]
 name = "vet_agent"

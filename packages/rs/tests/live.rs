@@ -29,3 +29,14 @@ async fn agent_one_has_at_least_thirty_feedback_entries() {
         feedback.len()
     );
 }
+
+#[tokio::test]
+#[ignore]
+async fn agent_zero_registered_at_best_effort() {
+    let provider = ProviderBuilder::new().connect_http(BASE_RPC_URL.parse().unwrap());
+    let agent = provider.get_agent(U256::from(0)).await.unwrap();
+    // Best-effort: a public RPC's log-range/response-size limits can legitimately
+    // return None (see facts::find_registered_at doc comment) -- either outcome is
+    // acceptable here, this just confirms the read never *errors*.
+    eprintln!("agent #0 registered_at = {:?}", agent.registered_at);
+}

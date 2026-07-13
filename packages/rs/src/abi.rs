@@ -18,6 +18,11 @@ sol! {
         // identity.json: "ERC721NonexistentToken" (error) — used to classify a
         // nonexistent-agentId revert into Erc8004Error::AgentNotFound.
         error ERC721NonexistentToken(uint256 tokenId);
+        // identity.json: "Registered" (event) — used for the best-effort
+        // `registered_at` log-scan (mirrors packages/ts/src/actions/getAgent.ts's
+        // `registeredEvent` / packages/py's `_find_registered_at`). Not a getter — no
+        // `registeredAt` view function exists on-chain.
+        event Registered(uint256 indexed agentId, string agentURI, address indexed owner);
     }
 
     #[sol(rpc)]

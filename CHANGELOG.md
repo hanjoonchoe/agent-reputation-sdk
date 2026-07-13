@@ -43,6 +43,27 @@ vectors, examples, CI, and dry-run release plumbing.
   workflow publishes anything.**
 - Root README rewrite: two-layer contract, package status table, design principles,
   and the golden-vectors conformance challenge.
+- [`conformance/`](conformance/) — the second half of the cross-language contract
+  (alongside `vectors/`), enforced by construction instead of discipline:
+  - `caveats.json` — the canonical calculator caveat strings; each package now has a
+    test asserting its embedded constants byte-match this file.
+  - `verification-cases.json` — language-agnostic registration-file verification
+    cases (`data:`, `https://`, `ipfs://` CID match/mismatch, unsupported scheme,
+    oversize response); each package has a table-driven test iterating this file
+    through its fetch/verify path with an injected fetcher.
+  - `api-manifest.json` — the canonical facts-layer + calculator API surface (method
+    names, result field names, the 6 error names, the 2 credibility strategy names);
+    each package asserts its actual exported surface against it, and
+    `scripts/check-parity.mjs` (`pnpm run check:parity`, wired into the `ts` CI job)
+    does a cheap cross-package grep-based version of the same check.
+- `packages/rs` parity fixes: `Agent.registered_at: Option<u64>` (a best-effort
+  `Registered`-event log-scan from the chain's `deployment_block`, matching the
+  TS/py facts layers — `None` on any scan/lookup failure, never an error), and a true
+  mid-stream byte cap in the registration-file fetcher (`reqwest::Response::bytes_stream()`
+  accumulated with an abort past 2 MiB, rather than buffering the whole response before
+  checking size) — plus a minimal injectable `ByteFetcher` seam so `packages/rs` can
+  now participate in the `verification-cases.json` conformance test the way `packages/ts`
+  (`fetchImpl`) and `packages/py` (`fetch_impl`) already could.
 
 ### Notes
 

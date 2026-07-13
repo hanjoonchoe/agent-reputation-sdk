@@ -17,4 +17,4 @@ pub mod fetch;
 
 pub use errors::Erc8004Error;
 pub use facts::{Agent, Erc8004ProviderExt, FeedbackEntry, ValidationEntry, ValidationMethod};
-pub use fetch::RegistrationFile;
+pub use fetch::{ByteFetcher, RegistrationFile, ReqwestFetcher};

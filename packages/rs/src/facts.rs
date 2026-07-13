@@ -4,8 +4,11 @@
 //!
 //! Read-only, forever: nothing in this module ever signs or sends a transaction.
 
+use alloy::eips::BlockNumberOrTag;
 use alloy::primitives::{Address, B256, U256};
 use alloy::providers::Provider;
+use alloy::rpc::types::Filter;
+use alloy::sol_types::SolEvent;
 
 use crate::abi::{IIdentityRegistry, IReputationRegistry, IValidationRegistry};
 use crate::chains::get_chain_config;
@@ -20,6 +23,40 @@ pub struct Agent {
     pub agent_id: U256,
     pub owner: Address,
     pub token_uri: String,
+    /// Best-effort `Registered`-event log-scan result (see `find_registered_at`).
+    /// `None` if the scan or block-timestamp lookup fails for any reason — never an
+    /// error, mirroring the TS/py facts layers.
+    pub registered_at: Option<u64>,
+}
+
+/// Best-effort scan for the `Registered(agentId, agentURI, owner)` event, from the
+/// chain's `deployment_block` to `latest`, to recover an agent's registration
+/// timestamp (no `registeredAt` getter exists on-chain). Ported from
+/// `packages/ts/src/actions/getAgent.ts::findRegisteredAt` /
+/// `packages/py/src/web3_agent_reputation/module.py::_find_registered_at`. Any
+/// failure (RPC error, missing block number, missing block) is swallowed into `None`
+/// rather than propagated — this is explicitly best-effort, not a guaranteed read.
+async fn find_registered_at(
+    provider: &impl Provider,
+    identity: Address,
+    deployment_block: u64,
+    agent_id: U256,
+) -> Option<u64> {
+    let filter = Filter::new()
+        .address(identity)
+        .event_signature(IIdentityRegistry::Registered::SIGNATURE_HASH)
+        .topic1(B256::from(agent_id))
+        .from_block(BlockNumberOrTag::Number(deployment_block))
+        .to_block(BlockNumberOrTag::Latest);
+
+    let logs = provider.get_logs(&filter).await.ok()?;
+    let first = logs.first()?;
+    let block_number = first.block_number?;
+    let block = provider
+        .get_block_by_number(BlockNumberOrTag::Number(block_number))
+        .await
+        .ok()??;
+    Some(block.header.timestamp)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -69,15 +106,19 @@ fn normalize_score(value: i128, decimals: u8) -> f64 {
     raw.clamp(0.0, 100.0)
 }
 
+async fn resolve_chain_config(
+    provider: &impl Provider,
+) -> Result<crate::chains::ChainConfig, Erc8004Error> {
+    let chain_id = provider.get_chain_id().await.map_err(Erc8004Error::rpc)?;
+    get_chain_config(chain_id).ok_or(Erc8004Error::ChainUnsupported {
+        chain_id: Some(chain_id),
+    })
+}
+
 async fn resolve_registries(
     provider: &impl Provider,
 ) -> Result<crate::chains::Registries, Erc8004Error> {
-    let chain_id = provider.get_chain_id().await.map_err(Erc8004Error::rpc)?;
-    get_chain_config(chain_id)
-        .map(|c| c.registries)
-        .ok_or(Erc8004Error::ChainUnsupported {
-            chain_id: Some(chain_id),
-        })
+    resolve_chain_config(provider).await.map(|c| c.registries)
 }
 
 /// Classifies an `ownerOf`/`tokenURI` call failure: `ERC721NonexistentToken` reverts
@@ -124,8 +165,8 @@ pub trait Erc8004ProviderExt: Provider + Clone {
 
 impl<P: Provider + Clone + Sync> Erc8004ProviderExt for P {
     async fn get_agent(&self, agent_id: U256) -> Result<Agent, Erc8004Error> {
-        let registries = resolve_registries(self).await?;
-        let identity = IIdentityRegistry::new(registries.identity, self.clone());
+        let config = resolve_chain_config(self).await?;
+        let identity = IIdentityRegistry::new(config.registries.identity, self.clone());
 
         let owner = identity
             .ownerOf(agent_id)
@@ -138,10 +179,19 @@ impl<P: Provider + Clone + Sync> Erc8004ProviderExt for P {
             .await
             .map_err(|e| classify_identity_error(agent_id, e))?;
 
+        let registered_at = find_registered_at(
+            self,
+            config.registries.identity,
+            config.deployment_block,
+            agent_id,
+        )
+        .await;
+
         Ok(Agent {
             agent_id,
             owner,
             token_uri,
+            registered_at,
         })
     }
 

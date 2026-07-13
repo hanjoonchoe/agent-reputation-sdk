@@ -13,10 +13,40 @@
 //!   registration files in the audited v1 contracts, so this is never verifiable one
 //!   way or the other. `verified: None`.
 
+use std::future::Future;
+use std::pin::Pin;
 use std::time::Duration;
 
 use crate::cid::verify_cid;
 use crate::errors::Erc8004Error;
+
+/// A boxed, `Send` future — used by [`ByteFetcher`] so it can be called through `&dyn`.
+pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
+
+/// Minimal injectable seam for fetching raw bytes from a URL: the Rust analogue of the
+/// TS port's `fetchImpl` / the Python port's `fetch_impl` injection points. Test code
+/// (see `conformance/verification-cases.json`'s test) implements this to serve canned
+/// bytes without a real network round trip; production code uses [`ReqwestFetcher`].
+pub trait ByteFetcher: Send + Sync {
+    fn fetch(&self, url: &str) -> BoxFuture<'_, Result<Vec<u8>, Erc8004Error>>;
+}
+
+/// The default [`ByteFetcher`]: a real `reqwest::Client` performing an HTTP GET with a
+/// 10s timeout and a 2 MiB mid-stream size cap (see `fetch_bytes`).
+pub struct ReqwestFetcher(pub reqwest::Client);
+
+impl Default for ReqwestFetcher {
+    fn default() -> Self {
+        Self(reqwest::Client::new())
+    }
+}
+
+impl ByteFetcher for ReqwestFetcher {
+    fn fetch(&self, url: &str) -> BoxFuture<'_, Result<Vec<u8>, Erc8004Error>> {
+        let url = url.to_string();
+        Box::pin(async move { fetch_bytes(&self.0, &url).await })
+    }
+}
 
 pub const MAX_BYTES: usize = 2 * 1024 * 1024; // 2 MiB
 pub const TIMEOUT: Duration = Duration::from_secs(10);
@@ -122,8 +152,13 @@ fn handle_data(uri: &str) -> Result<RegistrationFile, Erc8004Error> {
     })
 }
 
-/// Fetches raw bytes from a single URL with a 10s timeout and a 2 MiB size cap.
+/// Fetches raw bytes from a single URL with a 10s timeout and a 2 MiB size cap enforced
+/// while streaming (aborts as soon as the cap is exceeded, rather than buffering the
+/// whole response first) — mirrors `packages/ts/src/fetcher/fetch.ts::fetchBytes` /
+/// `packages/py/src/web3_agent_reputation/fetch.py::_fetch_bytes`.
 async fn fetch_bytes(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, Erc8004Error> {
+    use futures_util::StreamExt;
+
     let response = client
         .get(url)
         .timeout(TIMEOUT)
@@ -138,6 +173,8 @@ async fn fetch_bytes(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, Erc
         )));
     }
 
+    // Fast path: reject up front if the server declares an over-cap Content-Length,
+    // without reading a single byte of the body.
     if let Some(len) = response.content_length() {
         if len as usize > MAX_BYTES {
             return Err(Erc8004Error::file_unreachable(format!(
@@ -146,16 +183,22 @@ async fn fetch_bytes(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, Erc
         }
     }
 
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| Erc8004Error::file_unreachable(format!("{url}: {e}")))?;
-    if bytes.len() > MAX_BYTES {
-        return Err(Erc8004Error::file_unreachable(format!(
-            "{url} exceeded the 2 MiB size cap"
-        )));
+    // True mid-stream cap: accumulate chunks and abort (drop the stream, return an
+    // error) as soon as the running total exceeds MAX_BYTES, rather than reading the
+    // whole body via `.bytes()` first — this matters for responses with no (or an
+    // understated) Content-Length header.
+    let mut stream = response.bytes_stream();
+    let mut buf: Vec<u8> = Vec::new();
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|e| Erc8004Error::file_unreachable(format!("{url}: {e}")))?;
+        buf.extend_from_slice(&chunk);
+        if buf.len() > MAX_BYTES {
+            return Err(Erc8004Error::file_unreachable(format!(
+                "{url} exceeded the 2 MiB size cap while streaming"
+            )));
+        }
     }
-    Ok(bytes.to_vec())
+    Ok(buf)
 }
 
 fn parse_ipfs_uri(uri: &str) -> Option<(String, String)> {
@@ -175,7 +218,7 @@ fn gateway_url(gateway: &str, cid: &str, path: &str) -> String {
 }
 
 async fn handle_ipfs(
-    client: &reqwest::Client,
+    fetcher: &dyn ByteFetcher,
     uri: &str,
     gateways: &[&str],
 ) -> Result<RegistrationFile, Erc8004Error> {
@@ -187,7 +230,7 @@ async fn handle_ipfs(
     for gateway in gateways {
         let url = gateway_url(gateway, &cid, &path);
         attempted.push(url.clone());
-        match fetch_bytes(client, &url).await {
+        match fetcher.fetch(&url).await {
             Ok(bytes) => {
                 raw = Some(bytes);
                 break;
@@ -215,10 +258,10 @@ async fn handle_ipfs(
 }
 
 async fn handle_https(
-    client: &reqwest::Client,
+    fetcher: &dyn ByteFetcher,
     uri: &str,
 ) -> Result<RegistrationFile, Erc8004Error> {
-    let raw = fetch_bytes(client, uri).await?;
+    let raw = fetcher.fetch(uri).await?;
     let hash = keccak256_hex(&raw);
     let (content, content_error) = parse_json_content(&raw);
     // No on-chain hash commitment exists for https:// registration files in v1 —
@@ -233,22 +276,25 @@ async fn handle_https(
 }
 
 pub async fn fetch_registration_file(uri: &str) -> Result<RegistrationFile, Erc8004Error> {
-    fetch_registration_file_with(uri, &reqwest::Client::new(), DEFAULT_GATEWAYS).await
+    fetch_registration_file_with(uri, &ReqwestFetcher::default(), DEFAULT_GATEWAYS).await
 }
 
+/// Like [`fetch_registration_file`], but with an injectable [`ByteFetcher`] and
+/// gateway list — the seam conformance and unit tests use to serve canned bytes
+/// without a real network round trip.
 pub async fn fetch_registration_file_with(
     uri: &str,
-    client: &reqwest::Client,
+    fetcher: &dyn ByteFetcher,
     gateways: &[&str],
 ) -> Result<RegistrationFile, Erc8004Error> {
     if uri.starts_with("data:") {
         return handle_data(uri);
     }
     if uri.starts_with("ipfs://") {
-        return handle_ipfs(client, uri, gateways).await;
+        return handle_ipfs(fetcher, uri, gateways).await;
     }
     if uri.starts_with("https://") {
-        return handle_https(client, uri).await;
+        return handle_https(fetcher, uri).await;
     }
     let scheme = uri.split(':').next().unwrap_or(uri);
     Err(Erc8004Error::file_unreachable(format!(
@@ -283,5 +329,55 @@ mod tests {
         let (cid, path) = parse_ipfs_uri("ipfs://QmABC/sub/path.json").unwrap();
         assert_eq!(cid, "QmABC");
         assert_eq!(path, "/sub/path.json");
+    }
+
+    // R-4b: true mid-stream byte cap, against a real (local, wiremock-served) HTTP
+    // response with no `Content-Length` header, so the fast header-based rejection
+    // can't fire and the streaming accumulator has to do the work. Aligns Rust's cap
+    // enforcement with the TS/py ports' streaming-abort behavior
+    // (`packages/ts/src/fetcher/fetch.ts::fetchBytes`,
+    // `packages/py/src/web3_agent_reputation/fetch.py::_fetch_bytes`).
+    #[tokio::test]
+    async fn oversize_response_is_rejected_mid_stream() {
+        use wiremock::matchers::{method, path as path_matcher};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let server = MockServer::start().await;
+        let oversize = vec![0u8; MAX_BYTES + 1024];
+        Mock::given(method("GET"))
+            .and(path_matcher("/big.json"))
+            .respond_with(ResponseTemplate::new(200).set_body_bytes(oversize))
+            .mount(&server)
+            .await;
+
+        let client = reqwest::Client::new();
+        let url = format!("{}/big.json", server.uri());
+        let err = fetch_bytes(&client, &url)
+            .await
+            .expect_err("must reject oversize body");
+        let message = err.to_string();
+        assert!(
+            message.contains("2 MiB size cap"),
+            "expected a 2 MiB size cap error, got: {message}"
+        );
+    }
+
+    #[tokio::test]
+    async fn undersize_response_is_accepted() {
+        use wiremock::matchers::{method, path as path_matcher};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let server = MockServer::start().await;
+        let body = br#"{"ok":true}"#.to_vec();
+        Mock::given(method("GET"))
+            .and(path_matcher("/small.json"))
+            .respond_with(ResponseTemplate::new(200).set_body_bytes(body.clone()))
+            .mount(&server)
+            .await;
+
+        let client = reqwest::Client::new();
+        let url = format!("{}/small.json", server.uri());
+        let bytes = fetch_bytes(&client, &url).await.unwrap();
+        assert_eq!(bytes, body);
     }
 }
