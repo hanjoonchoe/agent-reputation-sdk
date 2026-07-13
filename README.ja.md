@@ -217,7 +217,7 @@ viem 向けの「agent-reputation」、web3.py 向けの「web3-agent-reputation
 ## 📖 なぜスコアがないのか? 理論を読む
 
 なぜこの SDK が、単一の「信頼スコア」ではなく `expectation` + `uncertainty` +
-注意事項にこだわるのか気になる方へ — 統計の予備知識を前提としない説明を
+注意事項にこだわるのか気になる方へ — 数学的背景（ベータ分布・共役性・主観論理）まで含んだ技術文書を
 [`docs/THEORY.md`](docs/THEORY.md) に用意しています。
 
 ## 🛠️ 開発
@@ -242,7 +242,7 @@ pnpm -r build         # TypeScript を dist/ にコンパイル
 - `vectors/` — 言語間のゴールデンベクターコンフォーマンスフィクスチャ。
 - `conformance/` — 言語間契約のもう半分: 標準の注意事項文字列、検証テストケース、
   API 表面マニフェスト — [`conformance/README.md`](conformance/README.md) 参照。
-- `docs/THEORY.md` — 計算機の背景理論。統計の予備知識がない読者向けに執筆。
+- `docs/THEORY.md` — 計算機の背景理論。数学的背景（ベータ分布、共役性、主観論理）を含む。
 - `examples/` — すべての言語向けの実行可能で文書化されたサンプルスクリプト
   ([`examples/README.md`](examples/README.md) 参照)。
 - `.github/workflows/` — CI(`ci.yml`)と、ドライランのみの手動リリースワークフロー

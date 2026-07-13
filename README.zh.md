@@ -204,7 +204,7 @@ README 或示例中捕获的运行记录不同,甚至一小时后也可能与它
 
 如果你想知道本 SDK 为什么坚持返回 `expectation` + `uncertainty` + 注意事项,
 而不是直接给你一个"信任分数",我们在
-[`docs/THEORY.md`](docs/THEORY.md) 中给出了不预设任何统计学背景的解释。
+[`docs/THEORY.md`](docs/THEORY.md) 中给出了包含数学背景（Beta 分布、共轭性、主观逻辑）的技术性说明。
 
 ## 🛠️ 开发
 
@@ -228,7 +228,7 @@ pnpm -r build         # 将 TypeScript 编译到 dist/
 - `vectors/` —— 跨语言黄金向量一致性测试固件。
 - `conformance/` —— 跨语言契约的另一半:规范的注意事项字符串、验证测试用例,
   以及 API 表面清单 —— 见 [`conformance/README.md`](conformance/README.md)。
-- `docs/THEORY.md` —— 计算器背后的理论背景,面向没有统计学基础的读者撰写。
+- `docs/THEORY.md` —— 计算器背后的理论背景，包含数学基础（Beta 分布、共轭性、主观逻辑）。
 - `examples/` —— 每种语言下可运行、有文档说明的示例脚本(见
   [`examples/README.md`](examples/README.md))。
 - `.github/workflows/` —— CI(`ci.yml`)以及仅执行 dry-run 的手动发布工作流
