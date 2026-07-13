@@ -104,9 +104,7 @@ def test_determinism_shuffled_input():
     ]
     shuffled = [base[3], base[1], base[4], base[0], base[2]]
 
-    result_a = calculate_reputation(
-        base, witness_cap=1, credibility=activity_sqrt({"0xaaa": 2, "0xbbb": 4})
-    )
+    result_a = calculate_reputation(base, witness_cap=1, credibility=activity_sqrt({"0xaaa": 2, "0xbbb": 4}))
     result_b = calculate_reputation(
         shuffled, witness_cap=1, credibility=activity_sqrt({"0xaaa": 2, "0xbbb": 4})
     )

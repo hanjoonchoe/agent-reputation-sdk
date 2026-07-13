@@ -58,6 +58,11 @@ jobs:
         working-directory: packages/py
         run: uv run ruff check .
 
+      - name: ruff format --check
+        if: hashFiles('packages/py/pyproject.toml') != ''
+        working-directory: packages/py
+        run: uv run ruff format --check .
+
       - name: pytest
         if: hashFiles('packages/py/pyproject.toml') != ''
         working-directory: packages/py
@@ -66,3 +71,34 @@ jobs:
       - name: no-op (packages/py not present yet)
         if: hashFiles('packages/py/pyproject.toml') == ''
         run: echo "packages/py/pyproject.toml not found — skipping until the Python package lands."
+
+  # packages/rs lands from WP-E and may not exist yet — guarded like py.
+  rs:
+    name: rs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: hashFiles('packages/rs/Cargo.toml') != ''
+        with:
+          components: rustfmt, clippy
+
+      - name: cargo fmt --check
+        if: hashFiles('packages/rs/Cargo.toml') != ''
+        working-directory: packages/rs
+        run: cargo fmt --check
+
+      - name: cargo clippy
+        if: hashFiles('packages/rs/Cargo.toml') != ''
+        working-directory: packages/rs
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: cargo test
+        if: hashFiles('packages/rs/Cargo.toml') != ''
+        working-directory: packages/rs
+        run: cargo test
+
+      - name: no-op (packages/rs not present yet)
+        if: hashFiles('packages/rs/Cargo.toml') == ''
+        run: echo "packages/rs/Cargo.toml not found — skipping until the Rust package lands."

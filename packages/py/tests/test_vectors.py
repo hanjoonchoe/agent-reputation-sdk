@@ -38,8 +38,7 @@ def test_fixture_has_20_expected_rows():
 )
 def test_conformance_row(row):
     entries = [
-        FeedbackEntry(client=e["client"], score=e["score"])
-        for e in FIXTURE["feedback"][str(row["agentId"])]
+        FeedbackEntry(client=e["client"], score=e["score"]) for e in FIXTURE["feedback"][str(row["agentId"])]
     ]
     credibility = activity_sqrt(FIXTURE["distinctCounts"])
 

@@ -173,9 +173,7 @@ def test_get_registration_file_delegates_to_fetcher_for_data_uri():
     module, w3 = make_module()
     contract = MagicMock()
     _stub_get_agent_ok(w3, contract)
-    contract.functions.tokenURI.return_value.call.return_value = (
-        'data:application/json,{"name":"agent-0"}'
-    )
+    contract.functions.tokenURI.return_value.call.return_value = 'data:application/json,{"name":"agent-0"}'
 
     result = module.get_registration_file(1)
     assert result.verified is True

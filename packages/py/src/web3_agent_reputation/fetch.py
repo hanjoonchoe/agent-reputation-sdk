@@ -141,9 +141,7 @@ def _handle_data(uri: str) -> RegistrationFile:
     )
 
 
-def _handle_ipfs(
-    uri: str, fetch_impl: FetchImpl, gateways: Sequence[str]
-) -> RegistrationFile:
+def _handle_ipfs(uri: str, fetch_impl: FetchImpl, gateways: Sequence[str]) -> RegistrationFile:
     parsed = parse_ipfs_uri(uri)
     if parsed is None:
         raise FileUnreachableError(f"malformed ipfs URI: {uri}")

@@ -1,12 +1,15 @@
 {
   "name": "agent-reputation-sdk",
   "private": true,
-  "description": "Ethereum SDK extensions for ERC-8004: Trustless Agents — monorepo root",
+  "description": "Ethereum SDK extensions for ERC-8004: Trustless Agents \u2014 monorepo root",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "lint": "pnpm -r --if-present lint",
+    "lint": "pnpm run lint:ts && pnpm run lint:py && pnpm run lint:rs",
+    "lint:ts": "pnpm -r --if-present lint",
+    "lint:py": "sh -c 'cd packages/py && uv run ruff check . && uv run ruff format --check .'",
+    "lint:rs": "sh -c 'if [ -f packages/rs/Cargo.toml ]; then cd packages/rs && cargo fmt --check && cargo clippy --all-targets -- -D warnings; else echo \"packages/rs not present yet \u2014 skipping\"; fi'",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "test:live": "pnpm -r --if-present test:live",
