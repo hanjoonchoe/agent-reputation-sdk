@@ -209,8 +209,8 @@ against instead of the live chain.
 ## 📖 Why no score? Read the theory
 
 If you're wondering why this SDK insists on `expectation` + `uncertainty` + caveats
-instead of just handing you a single "trust score," the reasoning — with no assumed
-statistics background — is in [`docs/THEORY.md`](docs/THEORY.md).
+instead of just handing you a single "trust score," the reasoning — with full mathematical
+background — is in [`docs/THEORY.md`](docs/THEORY.md).
 
 ## 🛠️ Development
 
@@ -236,7 +236,7 @@ Project layout:
   strings, verification test cases, and the API-surface manifest — see
   [`conformance/README.md`](conformance/README.md).
 - `docs/THEORY.md` — the background theory behind the calculator, written for readers
-  with no statistics background.
+  with the mathematical background included (Beta distribution, conjugacy, subjective logic).
 - `examples/` — runnable, documented example scripts in every language (see
   [`examples/README.md`](examples/README.md)).
 - `.github/workflows/` — CI (`ci.yml`) and a dry-run-only manual release workflow
