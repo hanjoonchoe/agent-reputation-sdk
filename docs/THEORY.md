@@ -63,6 +63,26 @@ $$b=\frac{r}{r+s+2},\qquad d=\frac{s}{r+s+2},\qquad u=\frac{2}{r+s+2}.$$
 $u$ is the uncertainty mass: it equals $1$ at zero evidence and decreases
 monotonically toward $0$ as $r+s$ grows. The Beta reputation system (Jøsang & Ismail, 2002) is this construction applied to accumulated feedback.
 
+### The Beta Reputation System (Jøsang & Ismail, 2002)
+
+The calculator is a direct implementation of the Beta Reputation System (BRS),
+proposed by Jøsang & Ismail at the 15th Bled eConference (2002). BRS defines an
+agent's reputation as the Beta posterior over accumulated feedback: given positive
+evidence $r$ and negative evidence $s$, the reputation function is
+$\mathrm{Beta}(r+1,\, s+1)$, summarized by the probability expectation
+$E=\frac{r+1}{r+s+2}$. Three mechanisms from the paper map onto this library:
+
+| BRS (paper)                                                                             | This library                                                              |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Ratings as continuous degrees of satisfaction contributing fractional $(r, s)$ evidence | score normalization $v = \mathit{score}/100$ → evidence $(v,\, 1-v)$ (§2) |
+| Reputation discounting — feedback weighted by the credibility of its source             | discount operator $\otimes$ with $c_k$ (§2, §5)                           |
+| Forgetting factor $\lambda$ — geometric down-weighting of older feedback                | decay: reserved, not in v0.1 (§6; v1 read functions expose no timestamps) |
+
+One structural deviation: BRS pools all feedback into a single $(r, s)$ pair,
+whereas this library first accumulates evidence per witness and optionally caps
+each witness's evidence mass before fusing (§3) — a response to Sybil-style
+repetition that the 2002 setting did not need to address.
+
 ## 2. The model
 
 Each feedback entry with a raw score on a nominal 0–100 scale is normalized to
