@@ -50,6 +50,11 @@
  * order so that floating-point summation is bit-for-bit reproducible across runs
  * and across languages, not merely "close" — this is what makes the golden test
  * vectors in `vectors/` a meaningful cross-language contract.
+ *
+ * Primary source: Jøsang & Ismail (2002), "The Beta Reputation System",
+ * 15th Bled eConference — https://www.mn.uio.no/ifi/english/people/aca/josang/publications/ji2002-bled.pdf
+ * (expectation = Laplace rule of succession; witness fusion = subjective-logic consensus;
+ * credibility weighting = the discount operator.)
  */
 
 export type FeedbackEntry = {
