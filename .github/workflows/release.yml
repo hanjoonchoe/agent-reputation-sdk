@@ -1,0 +1,92 @@
+name: Release
+
+# Manual only — tag-triggered, dry-run only. Nothing in this workflow publishes
+# anything anywhere until the "FLIP AT RELEASE" step below is deliberately
+# uncommented in a future PR (see CHANGELOG.md).
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write # OIDC — required for npm provenance and PyPI Trusted Publishing
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
+      - run: pnpm -r build
+
+  publish-ts-dry-run:
+    name: npm publish (dry run)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter agent-reputation build
+
+      # `packages/ts/package.json` still has "private": true, so this simulates the
+      # publish (tarball contents, provenance attestation shape) without ever
+      # contacting the registry to write anything. Flip "private" to false and
+      # drop --dry-run in the same release PR that's actually ready to ship v0.1.0.
+      - name: npm publish --dry-run
+        working-directory: packages/ts
+        run: npm publish --provenance --dry-run --access public
+
+  publish-py:
+    name: PyPI publish (placeholder — commented out)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        if: hashFiles('packages/py/pyproject.toml') != ''
+        with:
+          enable-cache: true
+
+      - name: Build sdist + wheel
+        if: hashFiles('packages/py/pyproject.toml') != ''
+        working-directory: packages/py
+        run: uv build
+
+      # FLIP AT RELEASE: uncomment this step once packages/py is ready to actually
+      # ship to PyPI. Requires a Trusted Publisher configured on pypi.org for
+      # project "web3-agent-reputation" pointing at this repo + workflow file +
+      # environment name — no long-lived API token needed (that's the point of
+      # Trusted Publishing / OIDC). Nothing above this comment publishes anything.
+      #
+      # - name: Publish to PyPI
+      #   if: hashFiles('packages/py/pyproject.toml') != ''
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     packages-dir: packages/py/dist
+      #     print-hash: true
+
+      - name: no-op (packages/py not present yet)
+        if: hashFiles('packages/py/pyproject.toml') == ''
+        run: echo "packages/py/pyproject.toml not found — nothing to build or publish yet."

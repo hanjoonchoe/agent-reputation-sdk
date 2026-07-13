@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ts:
+    name: ts (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm -r lint
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
+      - run: pnpm -r build
+
+  # packages/py lands from a separate work package (WP-C) and may not exist yet on
+  # this branch. Every step below is guarded so the job skips gracefully instead of
+  # failing until packages/py/pyproject.toml is actually present.
+  py:
+    name: py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v3
+        if: hashFiles('packages/py/pyproject.toml') != ''
+        with:
+          enable-cache: true
+
+      - name: uv sync
+        if: hashFiles('packages/py/pyproject.toml') != ''
+        working-directory: packages/py
+        run: uv sync --all-extras --dev
+
+      - name: ruff check
+        if: hashFiles('packages/py/pyproject.toml') != ''
+        working-directory: packages/py
+        run: uv run ruff check .
+
+      - name: pytest
+        if: hashFiles('packages/py/pyproject.toml') != ''
+        working-directory: packages/py
+        run: uv run pytest
+
+      - name: no-op (packages/py not present yet)
+        if: hashFiles('packages/py/pyproject.toml') == ''
+        run: echo "packages/py/pyproject.toml not found — skipping until the Python package lands."
