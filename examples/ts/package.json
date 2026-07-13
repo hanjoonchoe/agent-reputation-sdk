@@ -1,0 +1,14 @@
+{
+  "name": "example-vet-agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runnable pre-delegation guard example for agent-reputation.",
+  "dependencies": {
+    "agent-reputation": "workspace:*",
+    "viem": "^2.55.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
