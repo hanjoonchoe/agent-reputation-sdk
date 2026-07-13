@@ -1,0 +1,45 @@
+{
+  "$schema": "Canonical API surface for the 4 facts-layer methods + the calculator, shared across packages/ts, packages/py, packages/rs. Per-language casing rules: method and field names are declared here in canonical camelCase; ts uses camelCase as-is; py and rs use snake_case (mechanically: camelCase -> snake_case, e.g. tokenUri -> token_uri, topWitnessShare -> top_witness_share). Each package's api-manifest test asserts its actual exported surface matches this file (mapped through its casing rule), not the other way around -- this file is the source of truth a new language's surface must match to ship (see conformance/README.md).",
+
+  "methods": {
+    "getAgent": { "ts": "getAgent", "py": "get_agent", "rs": "get_agent" },
+    "getAgentFeedback": { "ts": "getAgentFeedback", "py": "get_agent_feedback", "rs": "get_agent_feedback" },
+    "getAgentValidations": { "ts": "getAgentValidations", "py": "get_agent_validations", "rs": "get_agent_validations" },
+    "getRegistrationFile": { "ts": "getRegistrationFile", "py": "get_registration_file", "rs": "get_registration_file" },
+    "calculateReputation": { "ts": "calculateReputation", "py": "calculate_reputation", "rs": "calculate_reputation" }
+  },
+
+  "resultFields": {
+    "Agent": ["agentId", "owner", "tokenUri", "registeredAt"],
+    "FeedbackEntry": ["client", "score", "tag", "uri", "timestamp"],
+    "ValidationEntry": ["validator", "method", "requestHash", "response", "timestamp"],
+    "RegistrationFile": ["verified", "content", "contentError", "source", "hash"],
+    "Reputation": ["expectation", "uncertainty", "witnesses", "entries", "topWitnessShare", "caveats", "policy"],
+    "_notes": {
+      "FeedbackEntry": "This is the facts-layer FeedbackEntry (getAgentFeedback's element type), distinct from the calculator's input FeedbackEntry ({client, score} only, see resultFields._calculatorInput).",
+      "ValidationEntry.method": "One of validationMethods below (canonical lowercase strings, not casing-mapped).",
+      "rs.FeedbackEntry (facts.rs)": "the Rust facts-layer FeedbackEntry currently omits `uri`/`timestamp` (both always null/None in ts/py) -- a documented, harmless surface trim, not a parity gap; the calculator's FeedbackEntry (calculator.rs) is unaffected."
+    },
+    "_calculatorInput": {
+      "FeedbackEntry": ["client", "score"]
+    }
+  },
+
+  "errorNames": [
+    "AgentNotFound",
+    "ChainUnsupported",
+    "Rpc",
+    "FileUnreachable",
+    "FileHashMismatch",
+    "InvalidInput"
+  ],
+  "errorNamingRule": {
+    "ts": "{Name}Error (class name), e.g. AgentNotFoundError",
+    "py": "{Name}Error (class name), e.g. AgentNotFoundError",
+    "rs": "Erc8004Error::{Name} (enum variant), e.g. Erc8004Error::AgentNotFound"
+  },
+
+  "validationMethods": ["tee", "zk", "reexec", "other"],
+
+  "credibilityStrategies": ["uniform", "activity-sqrt"]
+}

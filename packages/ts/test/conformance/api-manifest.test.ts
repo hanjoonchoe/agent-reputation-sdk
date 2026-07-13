@@ -1,0 +1,45 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { erc8004Actions } from "../../src/actions/erc8004Actions.js";
+import * as sdk from "../../src/index.js";
+
+const manifest = JSON.parse(
+  readFileSync(new URL("../../../../conformance/api-manifest.json", import.meta.url), "utf8"),
+) as {
+  methods: Record<string, { ts: string }>;
+  resultFields: { Reputation: string[] };
+  errorNames: string[];
+  credibilityStrategies: string[];
+};
+
+describe("conformance/api-manifest.json", () => {
+  it("erc8004Actions() exposes the canonical facts-layer method names", () => {
+    // `{}` stands in for a viem Client — none of these methods are invoked, only their
+    // presence as keys on the returned actions object is checked.
+    const actions = erc8004Actions()({} as never);
+    const expected = Object.entries(manifest.methods)
+      .filter(([, names]) => names.ts !== "calculateReputation")
+      .map(([, names]) => names.ts)
+      .sort();
+    expect(Object.keys(actions).sort()).toEqual(expected);
+  });
+
+  it("exports the canonical error classes", () => {
+    for (const name of manifest.errorNames) {
+      const className = `${name}Error`;
+      expect(sdk).toHaveProperty(className);
+      expect(typeof (sdk as unknown as Record<string, unknown>)[className]).toBe("function");
+    }
+  });
+
+  it("credibility strategies are exported under their canonical names", () => {
+    expect(sdk.uniform().name).toBe("uniform");
+    expect(sdk.activitySqrt({}).name).toBe(manifest.credibilityStrategies[1]);
+    expect(manifest.credibilityStrategies).toEqual(["uniform", "activity-sqrt"]);
+  });
+
+  it("a sample Reputation object has exactly the canonical field names", () => {
+    const rep = sdk.calculateReputation([{ client: "0xabc", score: 50 }]);
+    expect(Object.keys(rep).sort()).toEqual([...manifest.resultFields.Reputation].sort());
+  });
+});

@@ -1,0 +1,44 @@
+{
+  "$schema": "Language-agnostic registration-file verification cases for fetchRegistrationFile / fetch_registration_file / fetch_registration_file_with. Each language's test iterates this table through its fetch/verify path with an injected fetcher (fetchImpl / fetch_impl / an injectable ByteFetcher seam). `contentBase64`, when present, is the exact byte content the injected fetcher must serve for `uri` (for schemes that hit the network: ipfs://, https://). `data:` URIs carry their content inline in `uri` itself and need no injection. `byteLength`, when present (oversize case), means: the injected fetcher must serve that many bytes (content immaterial) so the 2 MiB cap rejects it before any JSON parse is attempted. `expected.errorName` is the canonical error name (see api-manifest.json's `errorNames` list and its per-language casing/suffix rules); when set, the call is expected to fail and `verified`/`source`/`contentError` are not meaningful.",
+  "cases": [
+    {
+      "name": "data-json",
+      "uri": "data:application/json;base64,eyJuYW1lIjoiYWdlbnQtMCJ9",
+      "expected": { "verified": true, "source": "data", "contentError": null, "errorName": null }
+    },
+    {
+      "name": "data-non-json",
+      "uri": "data:text/plain;base64,bm90IGpzb24=",
+      "expected": { "verified": true, "source": "data", "contentError": "not-json", "errorName": null }
+    },
+    {
+      "name": "https-verified-null",
+      "uri": "https://example.invalid/agent.json",
+      "contentBase64": "eyJuYW1lIjoiYWdlbnQtMyIsInNvdXJjZSI6Imh0dHBzIn0=",
+      "expected": { "verified": null, "source": "https", "contentError": null, "errorName": null }
+    },
+    {
+      "name": "ipfs-cid-match",
+      "uri": "ipfs://bafkreicvnc5vvx35rnhcz7cobxubue4em5isa54fov5aaghzy5iodqvrza",
+      "contentBase64": "eyJuYW1lIjoiYWdlbnQtbWF0Y2giLCJyZWdpc3RyYXRpb25zIjoxfQ==",
+      "expected": { "verified": true, "source": "ipfs", "contentError": null, "errorName": null }
+    },
+    {
+      "name": "ipfs-cid-mismatch",
+      "uri": "ipfs://bafkreihc26jjqnskpnsxakl5xwihfs7kav5m2cspxq3c6ednacjtxabzvi",
+      "contentBase64": "eyJuYW1lIjoiYWdlbnQtbWlzbWF0Y2gifQ==",
+      "expected": { "verified": false, "source": "ipfs", "contentError": null, "errorName": null }
+    },
+    {
+      "name": "unsupported-scheme",
+      "uri": "ftp://example.invalid/agent.json",
+      "expected": { "verified": null, "source": null, "contentError": null, "errorName": "FileUnreachable" }
+    },
+    {
+      "name": "oversize-response",
+      "uri": "https://example.invalid/too-big.json",
+      "byteLength": 2097153,
+      "expected": { "verified": null, "source": null, "contentError": null, "errorName": "FileUnreachable" }
+    }
+  ]
+}

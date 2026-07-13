@@ -1,0 +1,7 @@
+{
+  "$schema": "canonical caveat strings, extracted verbatim from packages/ts/src/calculator/index.ts. Every language's calculator embeds these constants byte-for-byte; see each package's conformance test. `lowVolume` is a template: substitute `{n}` with the feedback entry count.",
+  "sybil": "Feedback is self-reported by clients and may include Sybil or spam entries; treat scores as a weak signal.",
+  "scale": "On-chain feedback uses inconsistent score scales; averages are clamped to 0-100 and may overstate quality.",
+  "lowVolume": "Only {n} feedback entries exist; statistics are not meaningful.",
+  "noFeedback": "No feedback recorded."
+}
