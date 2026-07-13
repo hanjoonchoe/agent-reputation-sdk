@@ -1,6 +1,6 @@
 # agent-reputation
 
-Typed [viem](https://viem.sh) actions for [ERC-8004: Trustless Agents](https://eips.ethereum.org/EIPS/eip-8004) — the **facts layer** only. Read-only, forever: no signing, no writes, no `WalletClient` anywhere. This package does not score or judge anything — it decodes registry state and hands you facts and caveats; the calculator layer (a separate, pure function) is where policy-driven scoring lives.
+Typed [viem](https://viem.sh) actions for [ERC-8004: Trustless Agents](https://eips.ethereum.org/EIPS/eip-8004), plus a pure, policy-driven reputation calculator. Read-only, forever: no signing, no writes, no `WalletClient` anywhere. The facts layer decodes registry state and hands you facts and caveats, never an opinion; the calculator layer is a separate pure function — your policy in, an evidence-rich result out — that never returns a bare scalar.
 
 ## Install
 
@@ -69,6 +69,42 @@ viem's own idiom):
 
 Upstream error messages are sanitized to their first line (≤300 chars); full detail is
 preserved on `.cause`.
+
+## The calculator layer
+
+`calculateReputation` is a pure function — zero dependencies, no viem, no I/O, no
+clock, no randomness — that turns raw `FeedbackEntry[]` (as read by `getAgentFeedback`)
+plus your declared `Policy` into an evidence-rich `Reputation` result:
+
+```ts
+import { activitySqrt, calculateReputation, uniform } from "agent-reputation";
+
+const feedback = await client.getAgentFeedback({ agentId: 1n });
+
+// Variant A: pool all evidence, every client weighted equally.
+calculateReputation(feedback, { witnessCap: null, credibility: uniform() });
+
+// Variant B: cap each witness's evidence to 1 unit, weight by activity.
+calculateReputation(feedback, { witnessCap: 1, credibility: activitySqrt(distinctCounts) });
+// → { expectation, uncertainty, witnesses, entries, topWitnessShare, caveats, policy }
+```
+
+- `witnessCap` — `null`/omitted pools all evidence per client unscaled (variant A); a
+  number `W` caps each client's total evidence to `W` units before credibility
+  weighting (variant B), so one heavy submitter can't dominate the result.
+- `credibility` — a `(client: string) => number` in `[0, 1]`; defaults to `uniform()`
+  (every client weighted equally). `activitySqrt(distinctCounts)` weights by
+  `sqrt(d_k) / sqrt(d_max)`, where `d_k` is how many distinct agents client `k` has
+  rated in the caller-supplied `distinctCounts` map.
+- The result is read off a Beta(1,1)-prior posterior over pooled/discounted evidence —
+  `expectation` and `uncertainty` always sum information, never collapse it to a single
+  pass/fail.
+- `caveats` are deterministic and unremovable (a Sybil-risk caveat and a score-scale
+  caveat are always present; low-volume feedback adds a third).
+
+See [`packages/ts/src/calculator/index.ts`](src/calculator/index.ts) for the full
+normative algorithm description, and [`vectors/`](../../vectors) for the cross-language
+golden test vectors this implementation must reproduce exactly.
 
 ## Read-only, forever
 
