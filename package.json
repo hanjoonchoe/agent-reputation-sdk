@@ -1,0 +1,15 @@
+{
+  "name": "agent-reputation-sdk",
+  "private": true,
+  "description": "Ethereum SDK extensions for ERC-8004: Trustless Agents — monorepo root",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:live": "pnpm -r --if-present test:live",
+    "build": "pnpm -r --if-present build"
+  }
+}

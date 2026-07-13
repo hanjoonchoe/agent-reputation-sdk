@@ -1,0 +1,43 @@
+{
+  "name": "agent-reputation",
+  "version": "0.0.1",
+  "private": true,
+  "description": "viem actions for ERC-8004: Trustless Agents — typed registry reads and registration-file verification. Read-only, forever.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && mkdir -p dist/registry/abi && cp src/registry/abi/*.json dist/registry/abi/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --exclude \"**/*.live.test.ts\"",
+    "test:live": "vitest run test/live",
+    "lint": "eslint . && prettier --check \"**/*.{ts,js,json,md}\" --ignore-path .gitignore"
+  },
+  "peerDependencies": {
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.0.0",
+    "viem": "^2.55.1",
+    "vitest": "^2.0.0"
+  }
+}
