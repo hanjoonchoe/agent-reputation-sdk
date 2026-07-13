@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project intends to
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once it ships v0.1.0.
 
-## [Unreleased]
+## [0.1.0] - 2026-07-14
 
 Wave 1: the TypeScript package's facts + calculator layers, cross-language golden
 vectors, examples, CI, and dry-run release plumbing.

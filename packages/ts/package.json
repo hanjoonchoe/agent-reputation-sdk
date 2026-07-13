@@ -1,8 +1,7 @@
 {
   "name": "agent-reputation",
-  "version": "0.0.1",
-  "private": true,
-  "description": "viem actions for ERC-8004: Trustless Agents — typed registry reads and registration-file verification. Read-only, forever.",
+  "version": "0.1.0",
+  "description": "viem actions for ERC-8004: Trustless Agents \u2014 typed registry reads and registration-file verification. Read-only, forever.",
   "type": "module",
   "engines": {
     "node": ">=20"

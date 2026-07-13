@@ -1705,7 +1705,7 @@ wheels = [
 
 [[package]]
 name = "web3-agent-reputation"
-version = "0.1.0.dev0"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "web3" },

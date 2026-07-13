@@ -1,6 +1,6 @@
 [package]
 name = "alloy-agent-reputation"
-version = "0.1.0-alpha.0"
+version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "ERC-8004 read-only facts layer (alloy provider extension) + a pure, policy-driven reputation calculator."
