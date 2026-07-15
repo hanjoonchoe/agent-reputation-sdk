@@ -6,7 +6,8 @@
     "getAgentFeedback": { "ts": "getAgentFeedback", "py": "get_agent_feedback", "rs": "get_agent_feedback" },
     "getAgentValidations": { "ts": "getAgentValidations", "py": "get_agent_validations", "rs": "get_agent_validations" },
     "getRegistrationFile": { "ts": "getRegistrationFile", "py": "get_registration_file", "rs": "get_registration_file" },
-    "calculateReputation": { "ts": "calculateReputation", "py": "calculate_reputation", "rs": "calculate_reputation" }
+    "calculateReputation": { "ts": "calculateReputation", "py": "calculate_reputation", "rs": "calculate_reputation" },
+    "shouldEscalate": { "ts": "shouldEscalate", "py": "should_escalate", "rs": "should_escalate" }
   },
 
   "resultFields": {
@@ -15,6 +16,7 @@
     "ValidationEntry": ["validator", "method", "requestHash", "response", "timestamp"],
     "RegistrationFile": ["verified", "content", "contentError", "source", "hash"],
     "Reputation": ["expectation", "uncertainty", "witnesses", "entries", "topWitnessShare", "caveats", "policy"],
+    "EscalationVerdict": ["escalate", "reasons"],
     "_notes": {
       "FeedbackEntry": "This is the facts-layer FeedbackEntry (getAgentFeedback's element type), distinct from the calculator's input FeedbackEntry ({client, score} only, see resultFields._calculatorInput).",
       "ValidationEntry.method": "One of validationMethods below (canonical lowercase strings, not casing-mapped).",

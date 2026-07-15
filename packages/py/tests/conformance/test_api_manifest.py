@@ -9,9 +9,19 @@ import json
 from dataclasses import fields
 from pathlib import Path
 
-from web3_agent_reputation import FeedbackEntry, activity_sqrt, calculate_reputation, uniform
+from web3_agent_reputation import (
+    EscalationVerdict,
+    FeedbackEntry,
+    activity_sqrt,
+    calculate_reputation,
+    should_escalate,
+    uniform,
+)
 from web3_agent_reputation import errors as errors_module
 from web3_agent_reputation.module import ERC8004Module
+
+# Free functions on the calculator/gate surface — asserted individually, not on the module.
+_FREE_FUNCTIONS = {"calculateReputation", "shouldEscalate"}
 
 _FIXTURE_PATH = Path(__file__).resolve().parents[4] / "conformance" / "api-manifest.json"
 _FIXTURE = json.loads(_FIXTURE_PATH.read_text())
@@ -19,9 +29,19 @@ _FIXTURE = json.loads(_FIXTURE_PATH.read_text())
 
 def test_erc8004_module_exposes_canonical_facts_layer_methods():
     for method_name, casings in _FIXTURE["methods"].items():
-        if method_name == "calculateReputation":
+        if method_name in _FREE_FUNCTIONS:
             continue
         assert hasattr(ERC8004Module, casings["py"]), f"missing method {casings['py']}"
+
+
+def test_should_escalate_exported_and_verdict_has_canonical_fields():
+    assert callable(should_escalate)
+    rep = calculate_reputation([FeedbackEntry(client="0xabc", score=50)])
+    verdict = should_escalate(rep)
+    actual_fields = {f.name for f in fields(verdict)}
+    expected = {_camel_to_snake(name) for name in _FIXTURE["resultFields"]["EscalationVerdict"]}
+    assert actual_fields == expected
+    assert isinstance(verdict, EscalationVerdict)
 
 
 def test_errors_module_exposes_canonical_error_classes():

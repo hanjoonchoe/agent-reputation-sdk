@@ -91,6 +91,25 @@ fn reputation_struct_has_the_canonical_field_names() {
     } = rep;
 }
 
+// api-manifest.json: methods.shouldEscalate.rs = should_escalate (free function on `escalate`)
+#[test]
+fn should_escalate_is_the_canonical_free_function_name() {
+    use alloy_agent_reputation::escalate::{should_escalate, EscalationThresholds};
+    let rep = calculate_reputation(&[], Policy::default()).unwrap();
+    let _verdict = should_escalate(&rep, &EscalationThresholds::default());
+}
+
+// api-manifest.json: resultFields.EscalationVerdict = ["escalate", "reasons"]
+#[test]
+fn escalation_verdict_has_the_canonical_field_names() {
+    use alloy_agent_reputation::escalate::{should_escalate, EscalationThresholds, EscalationVerdict};
+    let rep = calculate_reputation(&[], Policy::default()).unwrap();
+    let EscalationVerdict {
+        escalate: _,
+        reasons: _,
+    } = should_escalate(&rep, &EscalationThresholds::default());
+}
+
 // api-manifest.json: errorNames (6) -> Erc8004Error variants (errorNamingRule.rs:
 // "Erc8004Error::{Name}")
 #[test]

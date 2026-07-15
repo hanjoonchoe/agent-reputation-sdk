@@ -1230,6 +1230,36 @@
       "uncertainty": 0.4,
       "witnesses": 3,
       "topWitnessShare": 0.8
+    },
+    {
+      "agentId": 0,
+      "variant": "B",
+      "witnessCap": 1,
+      "baseRate": 0.3,
+      "expectation": 0.592,
+      "uncertainty": 0.338,
+      "witnesses": 8,
+      "topWitnessShare": 0.316
+    },
+    {
+      "agentId": 1,
+      "variant": "B",
+      "witnessCap": 1,
+      "baseRate": 0.3,
+      "expectation": 0.63,
+      "uncertainty": 0.179,
+      "witnesses": 20,
+      "topWitnessShare": 0.154
+    },
+    {
+      "agentId": 6,
+      "variant": "A",
+      "witnessCap": null,
+      "baseRate": 0.8,
+      "expectation": 0.66,
+      "uncertainty": 0.2,
+      "witnesses": 3,
+      "topWitnessShare": 0.75
     }
   ]
 }
