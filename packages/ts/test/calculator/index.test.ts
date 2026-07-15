@@ -16,7 +16,28 @@ describe("calculateReputation", () => {
     expect(result.entries).toBe(0);
     expect(result.topWitnessShare).toBe(0);
     expect(result.caveats).toEqual([SYBIL_CAVEAT, "No feedback recorded."]);
-    expect(result.policy).toEqual({ witnessCap: null, credibility: "uniform" });
+    expect(result.policy).toEqual({ witnessCap: null, credibility: "uniform", baseRate: 0.5 });
+  });
+
+  it("baseRate defaults to 0.5 (Laplace) and is echoed", () => {
+    const result = calculateReputation([{ client: "0xa", score: 100 }]);
+    expect(result.policy.baseRate).toBe(0.5);
+    // r=1, s=0, a=0.5 -> (1 + 1)/(1+0+2) = 2/3
+    expect(result.expectation).toBeCloseTo(2 / 3, 12);
+  });
+
+  it("baseRate shifts the expectation toward the declared prior", () => {
+    const entries: FeedbackEntry[] = [{ client: "0xa", score: 100 }];
+    // r=1, s=0: E = (r + 2a)/(r+s+2). a=0 -> 1/3; a=1 -> 3/3=1.
+    expect(calculateReputation(entries, { baseRate: 0 }).expectation).toBeCloseTo(1 / 3, 12);
+    expect(calculateReputation(entries, { baseRate: 1 }).expectation).toBeCloseTo(1, 12);
+    // Empty feedback reverts entirely to the base rate.
+    expect(calculateReputation([], { baseRate: 0.2 }).expectation).toBe(0.2);
+  });
+
+  it("rejects an out-of-range baseRate", () => {
+    expect(() => calculateReputation([], { baseRate: 1.5 })).toThrow(/baseRate/);
+    expect(() => calculateReputation([], { baseRate: -0.1 })).toThrow(/baseRate/);
   });
 
   it("single witness repeated 3x100: r=3, s=0 -> E=0.8, u=0.4", () => {

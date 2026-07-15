@@ -135,6 +135,11 @@ pub struct Policy {
     /// witness's evidence to `w` units).
     pub witness_cap: Option<f64>,
     pub credibility: Credibility,
+    /// Base rate `a` in [0, 1] — the fourth term of Jøsang's (b, d, u, a) opinion, the
+    /// prior the expectation reverts to with no evidence. `E = (r + 2a)/(r+s+2)`.
+    /// `None` defaults to 0.5, reproducing the Beta(1,1)/Laplace prior (and every
+    /// existing golden vector).
+    pub base_rate: Option<f64>,
 }
 
 /// The echoed policy carried on `Reputation.policy` — a `witness_cap`/`credibility`-name
@@ -143,6 +148,7 @@ pub struct Policy {
 pub struct EchoedPolicy {
     pub witness_cap: Option<f64>,
     pub credibility: String,
+    pub base_rate: f64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -189,17 +195,25 @@ pub fn calculate_reputation(
     policy: Policy,
 ) -> Result<Reputation, Erc8004Error> {
     let witness_cap = policy.witness_cap;
+    let base_rate = policy.base_rate.unwrap_or(0.5);
+    if base_rate.is_nan() || !(0.0..=1.0).contains(&base_rate) {
+        return Err(Erc8004Error::invalid_input(format!(
+            "base_rate must be in [0, 1], got {base_rate}"
+        )));
+    }
     let credibility = policy.credibility;
     let echoed_policy = EchoedPolicy {
         witness_cap,
         credibility: credibility.name().to_string(),
+        base_rate,
     };
 
     let total_entries = entries.len();
 
     if total_entries == 0 {
         return Ok(Reputation {
-            expectation: 0.5,
+            // No evidence: expectation reverts to the base rate, uncertainty is maximal.
+            expectation: base_rate,
             uncertainty: 1.0,
             witnesses: 0,
             entries: 0,
@@ -252,7 +266,8 @@ pub fn calculate_reputation(
         s += sk;
     }
 
-    let expectation = (r + 1.0) / (r + s + 2.0);
+    // E = b + a*u = (r + 2a)/(r+s+2); a = 0.5 recovers Laplace's (r+1)/(r+s+2).
+    let expectation = (r + 2.0 * base_rate) / (r + s + 2.0);
     let uncertainty = 2.0 / (r + s + 2.0);
     let top_witness_share = max_count as f64 / total_entries as f64;
 
@@ -338,6 +353,7 @@ mod tests {
             Policy {
                 witness_cap: Some(1.0),
                 credibility: Credibility::Uniform,
+                base_rate: None,
             },
         )
         .unwrap();
@@ -364,6 +380,7 @@ mod tests {
             Policy {
                 witness_cap: None,
                 credibility: Credibility::ActivitySqrt(counts),
+                base_rate: None,
             },
         )
         .unwrap();
@@ -453,5 +470,59 @@ mod tests {
         let rep_b = calculate_reputation(&a, Policy::default()).unwrap();
 
         assert_eq!(rep_a, rep_b);
+    }
+
+    #[test]
+    fn base_rate_defaults_and_shifts() {
+        let entries = vec![FeedbackEntry {
+            client: "0xa".into(),
+            score: 100.0,
+        }];
+        // default a=0.5 -> Laplace: (1 + 1)/(1+0+2) = 2/3
+        let default = calculate_reputation(&entries, Policy::default()).unwrap();
+        approx(default.expectation, 2.0 / 3.0);
+        approx(default.policy.base_rate, 0.5);
+        // E = (r + 2a)/(r+s+2); r=1,s=0: a=0 -> 1/3, a=1 -> 1
+        let low = calculate_reputation(
+            &entries,
+            Policy {
+                base_rate: Some(0.0),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        approx(low.expectation, 1.0 / 3.0);
+        let high = calculate_reputation(
+            &entries,
+            Policy {
+                base_rate: Some(1.0),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        approx(high.expectation, 1.0);
+        // empty feedback reverts entirely to the base rate
+        let empty = calculate_reputation(
+            &[],
+            Policy {
+                base_rate: Some(0.2),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        approx(empty.expectation, 0.2);
+    }
+
+    #[test]
+    fn base_rate_out_of_range_is_invalid_input() {
+        let err = calculate_reputation(
+            &[],
+            Policy {
+                base_rate: Some(1.5),
+                ..Default::default()
+            },
+        )
+        .unwrap_err();
+        assert!(matches!(err, Erc8004Error::InvalidInput(_)));
     }
 }

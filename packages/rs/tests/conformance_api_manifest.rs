@@ -117,7 +117,8 @@ fn credibility_strategies_are_exported_under_canonical_names() {
     assert_eq!(
         Policy {
             witness_cap: None,
-            credibility: Credibility::Uniform
+            credibility: Credibility::Uniform,
+            base_rate: None,
         }
         .credibility_name(),
         "uniform"
@@ -125,7 +126,8 @@ fn credibility_strategies_are_exported_under_canonical_names() {
     assert_eq!(
         Policy {
             witness_cap: None,
-            credibility: Credibility::ActivitySqrt(Default::default())
+            credibility: Credibility::ActivitySqrt(Default::default()),
+            base_rate: None,
         }
         .credibility_name(),
         "activity-sqrt"

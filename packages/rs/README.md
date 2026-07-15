@@ -58,7 +58,7 @@ let entries = vec![
 ];
 let rep = calculate_reputation(
     &entries,
-    Policy { witness_cap: Some(1.0), credibility: Credibility::Uniform },
+    Policy { witness_cap: Some(1.0), credibility: Credibility::Uniform, base_rate: None },
 ).unwrap();
 // rep.expectation, rep.uncertainty, rep.witnesses, rep.top_witness_share, rep.caveats, rep.policy
 ```

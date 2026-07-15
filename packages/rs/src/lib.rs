@@ -12,6 +12,7 @@ pub mod calculator;
 pub mod chains;
 pub mod cid;
 pub mod errors;
+pub mod escalate;
 pub mod facts;
 pub mod fetch;
 

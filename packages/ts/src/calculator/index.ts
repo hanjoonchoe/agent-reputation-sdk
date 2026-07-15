@@ -68,6 +68,14 @@ export type Policy = {
   witnessCap?: number | null;
   /** c_k in [0, 1] per client address (case-insensitive). Default: uniform() = () => 1. */
   credibility?: (client: string) => number;
+  /**
+   * Base rate `a` in [0, 1] — the fourth term of Jøsang's (b, d, u, a) opinion, i.e.
+   * the prior the expectation reverts to when evidence is absent. `E = b + a*u =
+   * (r + 2a) / (r + s + 2)`. Default 0.5 reproduces the Beta(1,1) / Laplace prior
+   * (and every existing golden vector). A conservative caller lowers it so that a
+   * high-uncertainty result leans pessimistic; an optimistic caller raises it.
+   */
+  baseRate?: number;
   // decay reserved for a future version; not implemented in v1 (no timestamps in current reads).
 };
 
@@ -78,7 +86,7 @@ export type Reputation = {
   entries: number;
   topWitnessShare: number;
   caveats: string[];
-  policy: { witnessCap: number | null; credibility: string };
+  policy: { witnessCap: number | null; credibility: string; baseRate: number };
 };
 
 /**
@@ -153,13 +161,18 @@ export function calculateReputation(
   const credibilityFn = policy.credibility ?? uniform();
   const credibilityName =
     policy.credibilityName ?? (credibilityFn.name.length > 0 ? credibilityFn.name : "custom");
-  const echoedPolicy = { witnessCap, credibility: credibilityName };
+  const baseRate = policy.baseRate ?? 0.5;
+  if (baseRate < 0 || baseRate > 1 || Number.isNaN(baseRate)) {
+    throw new RangeError(`Policy.baseRate must be in [0, 1], got ${baseRate}`);
+  }
+  const echoedPolicy = { witnessCap, credibility: credibilityName, baseRate };
 
   const totalEntries = entries.length;
 
   if (totalEntries === 0) {
+    // No evidence: expectation reverts to the base rate, uncertainty is maximal.
     return {
-      expectation: 0.5,
+      expectation: baseRate,
       uncertainty: 1,
       witnesses: 0,
       entries: 0,
@@ -216,7 +229,8 @@ export function calculateReputation(
     s += sk;
   }
 
-  const expectation = (r + 1) / (r + s + 2);
+  // E = b + a*u = (r + 2a)/(r+s+2); a = 0.5 recovers Laplace's (r+1)/(r+s+2).
+  const expectation = (r + 2 * baseRate) / (r + s + 2);
   const uncertainty = 2 / (r + s + 2);
   const topWitnessShare = maxCount / totalEntries;
 

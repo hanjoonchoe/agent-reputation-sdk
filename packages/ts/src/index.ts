@@ -31,3 +31,8 @@ export {
   type Policy,
   type Reputation,
 } from "./calculator/index.js";
+export {
+  shouldEscalate,
+  type EscalationThresholds,
+  type EscalationVerdict,
+} from "./gate/escalate.js";
