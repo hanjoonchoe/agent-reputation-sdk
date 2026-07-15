@@ -37,6 +37,8 @@ struct ExpectedRow {
     witnesses: usize,
     #[serde(rename = "topWitnessShare")]
     top_witness_share: f64,
+    #[serde(rename = "baseRate", default)]
+    base_rate: Option<f64>,
 }
 
 fn round3(x: f64) -> f64 {
@@ -57,8 +59,8 @@ fn golden_vectors_conform() {
     let fixture = load_vectors();
     assert_eq!(
         fixture.expected.len(),
-        20,
-        "expected exactly 20 golden-vector rows"
+        23,
+        "expected exactly 23 golden-vector rows"
     );
 
     let mut checked = 0usize;
@@ -85,7 +87,7 @@ fn golden_vectors_conform() {
         let policy = Policy {
             witness_cap: row.witness_cap,
             credibility: Credibility::ActivitySqrt(fixture.distinct_counts.clone()),
-            base_rate: None,
+            base_rate: row.base_rate,
         };
 
         let rep = calculate_reputation(&entries, policy)
@@ -121,5 +123,5 @@ fn golden_vectors_conform() {
         checked += 1;
     }
 
-    assert_eq!(checked, 20, "golden-vector conformance: 20/20 rows checked");
+    assert_eq!(checked, 23, "golden-vector conformance: 23/23 rows checked");
 }

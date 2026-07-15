@@ -7,10 +7,14 @@ const manifest = JSON.parse(
   readFileSync(new URL("../../../../conformance/api-manifest.json", import.meta.url), "utf8"),
 ) as {
   methods: Record<string, { ts: string }>;
-  resultFields: { Reputation: string[] };
+  resultFields: { Reputation: string[]; EscalationVerdict: string[] };
   errorNames: string[];
   credibilityStrategies: string[];
 };
+
+// Free functions on the calculator/gate surface — asserted individually below, not as
+// keys on the viem actions object.
+const FREE_FUNCTIONS = new Set(["calculateReputation", "shouldEscalate"]);
 
 describe("conformance/api-manifest.json", () => {
   it("erc8004Actions() exposes the canonical facts-layer method names", () => {
@@ -18,10 +22,17 @@ describe("conformance/api-manifest.json", () => {
     // presence as keys on the returned actions object is checked.
     const actions = erc8004Actions()({} as never);
     const expected = Object.entries(manifest.methods)
-      .filter(([, names]) => names.ts !== "calculateReputation")
+      .filter(([, names]) => !FREE_FUNCTIONS.has(names.ts))
       .map(([, names]) => names.ts)
       .sort();
     expect(Object.keys(actions).sort()).toEqual(expected);
+  });
+
+  it("shouldEscalate is exported and returns the canonical EscalationVerdict fields", () => {
+    expect(typeof sdk.shouldEscalate).toBe("function");
+    const rep = sdk.calculateReputation([{ client: "0xabc", score: 50 }]);
+    const verdict = sdk.shouldEscalate(rep, {});
+    expect(Object.keys(verdict).sort()).toEqual([...manifest.resultFields.EscalationVerdict].sort());
   });
 
   it("exports the canonical error classes", () => {

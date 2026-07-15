@@ -17,6 +17,7 @@ type FixtureExpectedRow = {
   agentId: number;
   variant: "A" | "B";
   witnessCap: number | null;
+  baseRate?: number;
   expectation: number;
   uncertainty: number;
   witnesses: number;
@@ -46,12 +47,13 @@ function round3(n: number): number {
 }
 
 describe("golden vector conformance (base-2026-07-13.json)", () => {
-  it("fixture has 20 expected rows (A + B for agents 0-9)", () => {
-    expect(fixture.expected).toHaveLength(20);
+  it("fixture has 23 expected rows (A + B for agents 0-9, plus 3 base-rate cases)", () => {
+    expect(fixture.expected).toHaveLength(23);
   });
 
   for (const row of fixture.expected) {
-    it(`agent ${row.agentId} variant ${row.variant} (witnessCap=${row.witnessCap})`, () => {
+    const label = row.baseRate === undefined ? "" : ` baseRate=${row.baseRate}`;
+    it(`agent ${row.agentId} variant ${row.variant} (witnessCap=${row.witnessCap})${label}`, () => {
       const entries = fixture.feedback[String(row.agentId)] as FeedbackEntry[];
       const credibility = activitySqrt(fixture.distinctCounts);
 
@@ -59,6 +61,7 @@ describe("golden vector conformance (base-2026-07-13.json)", () => {
         witnessCap: row.witnessCap,
         credibility,
         credibilityName: "activity-sqrt",
+        baseRate: row.baseRate,
       });
 
       expect(round3(rep.expectation)).toBe(row.expectation);

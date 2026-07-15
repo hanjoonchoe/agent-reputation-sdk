@@ -27,14 +27,19 @@ def round3(n: float) -> float:
     return sign * round(abs(n) * 1000) / 1000
 
 
-def test_fixture_has_20_expected_rows():
-    assert len(FIXTURE["expected"]) == 20
+def test_fixture_has_23_expected_rows():
+    assert len(FIXTURE["expected"]) == 23
+
+
+def _row_id(r: dict) -> str:
+    suffix = f"-br{r['baseRate']}" if "baseRate" in r else ""
+    return f"agent{r['agentId']}-variant{r['variant']}{suffix}"
 
 
 @pytest.mark.parametrize(
     "row",
     FIXTURE["expected"],
-    ids=[f"agent{r['agentId']}-variant{r['variant']}" for r in FIXTURE["expected"]],
+    ids=[_row_id(r) for r in FIXTURE["expected"]],
 )
 def test_conformance_row(row):
     entries = [
@@ -47,6 +52,7 @@ def test_conformance_row(row):
         witness_cap=row["witnessCap"],
         credibility=credibility,
         credibility_name="activity-sqrt",
+        base_rate=row.get("baseRate", 0.5),
     )
 
     assert round3(rep.expectation) == row["expectation"]
