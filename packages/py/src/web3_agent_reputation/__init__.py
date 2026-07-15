@@ -38,6 +38,7 @@ from .calculator import (
     uniform,
 )
 from .chains import ChainConfig, get_chain_config, supported_chain_ids
+from .escalate import EscalationVerdict, should_escalate
 from .errors import (
     AgentNotFoundError,
     ChainUnsupportedError,
@@ -66,6 +67,9 @@ __all__ = [
     "SYBIL_CAVEAT",
     "SCALE_CAVEAT",
     "NO_FEEDBACK_CAVEAT",
+    # gate
+    "should_escalate",
+    "EscalationVerdict",
     # chains
     "ChainConfig",
     "get_chain_config",

@@ -63,6 +63,15 @@ $$b=\frac{r}{r+s+2},\qquad d=\frac{s}{r+s+2},\qquad u=\frac{2}{r+s+2}.$$
 $u$ is the uncertainty mass: it equals $1$ at zero evidence and decreases
 monotonically toward $0$ as $r+s$ grows. The Beta reputation system (Jøsang & Ismail, 2002) is this construction applied to accumulated feedback.
 
+A full subjective-logic opinion carries a fourth term, the **base rate** $a\in[0,1]$ —
+the prior probability assigned to the proposition before any evidence. The expectation
+is then $E=b+a\,u$, so under total ignorance ($u=1$) the estimate is exactly $a$, and as
+evidence accumulates ($u\to 0$) the base rate's influence vanishes. Laplace's rule is
+the special case $a=\tfrac12$: $E=\frac{r}{r+s+2}+\tfrac12\cdot\frac{2}{r+s+2}=\frac{r+1}{r+s+2}$.
+The calculator exposes $a$ as the `baseRate` policy field (default $\tfrac12$), so a
+caller can declare whether a high-uncertainty result should lean optimistic or
+conservative — the choice is echoed and thus recomputable like any other policy term.
+
 ### The Beta Reputation System (Jøsang & Ismail, 2002)
 
 The calculator is a direct implementation of the Beta Reputation System (BRS),
@@ -104,12 +113,14 @@ Two subjective-logic operators combine the per-witness evidence:
   credibility: $r_k \mapsto c_k r_k$, $s_k \mapsto c_k s_k$ with $c_k \in [0,1]$. §5
   gives the credibility strategies shipped.
 
-The result is read off the $\mathrm{Beta}(1,1)$ posterior over the fused totals:
+The result is read off the Beta posterior over the fused totals, with the base rate $a$
+(default $\tfrac12$) setting the prior:
 
-$$E=\frac{r+1}{r+s+2},\qquad u=\frac{2}{r+s+2}.$$
+$$E=b+a\,u=\frac{r+2a}{r+s+2},\qquad u=\frac{2}{r+s+2}.$$
 
-Every returned result carries $E$, $u$, witness statistics, mandatory caveats, and the
-echoed policy; the library never emits $E$ alone.
+At $a=\tfrac12$ this is the $\mathrm{Beta}(1,1)$ / Laplace posterior $\frac{r+1}{r+s+2}$,
+reproducing every golden vector. Every returned result carries $E$, $u$, witness
+statistics, mandatory caveats, and the echoed policy; the library never emits $E$ alone.
 
 ## 3. Witness independence and the cap
 
@@ -128,6 +139,26 @@ the golden vectors) equalizes all witnesses at one evidence unit; `witnessCap = 
 (variant A) pools evidence unscaled. The cap is a declared policy, not a mathematical
 necessity: the correct trade-off between per-witness volume and witness count depends
 on the deployment's Sybil-cost assumptions, which the library does not fix.
+
+### What the cap does *not* do (a Sybil-resistance bound)
+
+The cap bounds a *repeated* witness, but it does not make the aggregate
+Sybil-resistant, and no policy on this aggregate can. Cheng & Friedman (2005) prove
+that **no symmetric reputation function is Sybilproof**: if the score is invariant
+under relabeling identities — as any pure feedback-summation is, including this one and
+its capped variant — an attacker always benefits from splitting its influence across
+fresh identities. Concretely, capping pushes a would-be ballot-stuffer from *one loud
+address* toward *many quiet ones*, which lowers `topWitnessShare` and, because it
+raises the effective witness count, *lowers* $u$ — the aggregate looks better, not
+worse. The only class that escapes the impossibility is asymmetric,
+source-relative propagation (flow / random-walk reputation seeded from a trusted
+anchor set), because there "reputation" is defined relative to who is asking. This
+library keeps aggregation symmetric by design and offloads Sybil resistance to two
+places: the identity layer (staking / proof-of-personhood — the authentication
+assumption the BRS paper itself makes explicit), and, optionally, a caller-supplied
+trust anchor threaded through the credibility function (§5, §6). Uncertainty and
+concentration gates (§6) therefore filter *weak* evidence, not *adversarial* evidence;
+conflating the two is the central error this section exists to prevent.
 
 ## 4. Empirical validation
 
@@ -174,6 +205,15 @@ to give it — is a policy choice the library exposes but does not make.
 - **No decay in v0.1.** Time-weighting is reserved in the `Policy` shape but
   unimplemented: the v1 read functions expose no per-entry timestamp, so there is no
   quantity to decay against.
+- **Gating is a separate predicate.** The library computes $E\pm u$; it does not decide
+  whether that is good enough to act on. `shouldEscalate(rep, thresholds)` — a pure
+  predicate *outside* the calculator — checks caller-declared sufficiency
+  (`minWitnesses`, `maxUncertainty`) and concentration (`maxTopWitnessShare`) thresholds
+  and returns an escalate/reasons verdict. Per §3.1 these are weak-evidence filters, not
+  Sybil defenses. Keeping the predicate out of the pure calculator lets the
+  consume-the-output policy vary independently of aggregation, and makes "insufficient
+  support → route to a live check" an explicit, recomputable decision rather than an
+  implicit reading of the point estimate.
 
 ## 7. Reproducibility
 
@@ -200,3 +240,9 @@ to give it — is a policy choice the library exposes but does not make.
 - Jøsang, A., Ismail, R. & Boyd, C. (2007). _A Survey of Trust and Reputation Systems
   for Online Service Provision._ Decision Support Systems, 43(2), 618–644 — survey
   including the graph-propagation methods excluded in §6.
+- Cheng, A. & Friedman, E. (2005). _Sybilproof Reputation Mechanisms._ ACM SIGCOMM
+  Workshop on Economics of P2P Systems, 128–132 — the impossibility result in §3.1: no
+  symmetric reputation function is Sybilproof; only asymmetric flow/path-based schemes
+  can be.
+- Jøsang, A. (2016). _Subjective Logic_, ch. 3 — the base rate $a$ and the
+  $E=b+a\,u$ expectation used in §1–§2.

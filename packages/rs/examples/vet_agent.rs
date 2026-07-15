@@ -74,6 +74,7 @@ async fn main() -> ExitCode {
         Policy {
             witness_cap: None,
             credibility: Credibility::Uniform,
+            base_rate: None,
         },
     )
     .expect("valid feedback scores");
@@ -82,6 +83,7 @@ async fn main() -> ExitCode {
         Policy {
             witness_cap: Some(1.0),
             credibility: Credibility::Uniform,
+            base_rate: None,
         },
     )
     .expect("valid feedback scores");

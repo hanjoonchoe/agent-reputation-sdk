@@ -4,6 +4,42 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project intends to
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once it ships v0.1.0.
 
+## [0.2.0] - 2026-07-15
+
+Caller-declared trust policy: base rate, an escalation predicate, and the theory that
+bounds what they can promise. All additive and backward-compatible — every existing
+golden vector reproduces unchanged (`baseRate` defaults to 0.5, the Beta(1,1)/Laplace
+prior). Shipped identically across TypeScript, Python, and Rust (TS 99, Py 46, Rust 35
+tests passing).
+
+### Added
+
+- **Base rate `a`** on the calculator policy (`baseRate` / `base_rate`, default 0.5) —
+  the fourth term of Jøsang's `(b, d, u, a)` opinion. Generalizes the expectation to
+  `E = b + a·u = (r + 2a)/(r + s + 2)`; with no evidence the estimate reverts to `a`,
+  so a caller can declare whether a high-uncertainty result leans optimistic or
+  conservative. Echoed in `Reputation.policy` and thus recomputable. `a ∉ [0, 1]` is
+  rejected as invalid input.
+- **`shouldEscalate` / `should_escalate`** — a pure predicate *outside* the calculator
+  that gates a `Reputation` on caller-declared sufficiency (`minWitnesses`,
+  `maxUncertainty`) and concentration (`maxTopWitnessShare`) thresholds, returning an
+  `{ escalate, reasons }` verdict. Keeps aggregation separate from the
+  proceed/escalate decision; makes "insufficient support → route to a live check" an
+  explicit, recomputable step.
+- `examples/ts/personalized-trust.ts` — caller-relative trust: threading a caller's
+  own anchor set through the credibility function (the 1-hop, tier-2 answer to
+  address-spreading sybils), combined with a conservative `baseRate` and
+  `shouldEscalate`. Demonstrates that `witnesses` is a raw address count, not effective
+  witness count, under anchor credibility.
+
+### Documentation
+
+- `docs/THEORY.md`: base rate added to §1–§2; new §3.1 stating the Cheng & Friedman
+  (2005) impossibility result — no *symmetric* reputation function is Sybilproof, so
+  uncertainty/concentration gates filter weak evidence, not adversarial evidence; §6
+  documents the escalation predicate as a deliberately separate concern. (English
+  updated; ko/ja/zh translations pending.)
+
 ## [0.1.0] - 2026-07-14
 
 Wave 1: the TypeScript package's facts + calculator layers, cross-language golden

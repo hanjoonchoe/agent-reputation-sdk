@@ -26,7 +26,26 @@ def test_empty_input():
     assert result.entries == 0
     assert result.top_witness_share == 0
     assert result.caveats == [SYBIL_CAVEAT, "No feedback recorded."]
-    assert result.policy == {"witnessCap": None, "credibility": "uniform"}
+    assert result.policy == {"witnessCap": None, "credibility": "uniform", "baseRate": 0.5}
+
+
+def test_base_rate_defaults_and_shifts():
+    entries = [FeedbackEntry("0xa", 100)]
+    # default a=0.5 -> Laplace: (1 + 1)/(1+0+2) = 2/3
+    assert calculate_reputation(entries).policy["baseRate"] == 0.5
+    assert calculate_reputation(entries).expectation == pytest.approx(2 / 3, abs=1e-12)
+    # E = (r + 2a)/(r+s+2); r=1,s=0: a=0 -> 1/3, a=1 -> 1
+    assert calculate_reputation(entries, base_rate=0).expectation == pytest.approx(1 / 3, abs=1e-12)
+    assert calculate_reputation(entries, base_rate=1).expectation == pytest.approx(1, abs=1e-12)
+    # empty feedback reverts entirely to the base rate
+    assert calculate_reputation([], base_rate=0.2).expectation == 0.2
+
+
+def test_base_rate_out_of_range_rejected():
+    with pytest.raises(InvalidInputError):
+        calculate_reputation([], base_rate=1.5)
+    with pytest.raises(InvalidInputError):
+        calculate_reputation([], base_rate=-0.1)
 
 
 def test_single_witness_3x100():

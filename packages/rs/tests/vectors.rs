@@ -85,6 +85,7 @@ fn golden_vectors_conform() {
         let policy = Policy {
             witness_cap: row.witness_cap,
             credibility: Credibility::ActivitySqrt(fixture.distinct_counts.clone()),
+            base_rate: None,
         };
 
         let rep = calculate_reputation(&entries, policy)

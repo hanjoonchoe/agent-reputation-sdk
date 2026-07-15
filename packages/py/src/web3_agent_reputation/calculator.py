@@ -157,16 +157,27 @@ def calculate_reputation(
     witness_cap: float | None = None,
     credibility: CredibilityFn | None = None,
     credibility_name: str | None = None,
+    base_rate: float = 0.5,
 ) -> Reputation:
+    # Base rate a in [0,1] — the fourth term of Jøsang's (b,d,u,a) opinion, the prior
+    # the expectation reverts to with no evidence. E = (r + 2a)/(r+s+2); a=0.5 gives
+    # Laplace's (r+1)/(r+s+2). See the TS reference and docs/THEORY.md.
+    if math.isnan(base_rate) or base_rate < 0 or base_rate > 1:
+        raise InvalidInputError(f"base_rate must be in [0, 1], got {base_rate}")
+
     credibility_fn = credibility if credibility is not None else uniform()
     resolved_name = credibility_name or getattr(credibility_fn, "__name__", "") or "custom"
-    echoed_policy: dict[str, object] = {"witnessCap": witness_cap, "credibility": resolved_name}
+    echoed_policy: dict[str, object] = {
+        "witnessCap": witness_cap,
+        "credibility": resolved_name,
+        "baseRate": base_rate,
+    }
 
     total_entries = len(entries)
 
     if total_entries == 0:
         return Reputation(
-            expectation=0.5,
+            expectation=base_rate,
             uncertainty=1.0,
             witnesses=0,
             entries=0,
@@ -213,7 +224,8 @@ def calculate_reputation(
         r += rk
         s += sk
 
-    expectation = (r + 1) / (r + s + 2)
+    # E = b + a*u = (r + 2a)/(r+s+2); a = 0.5 recovers Laplace's (r+1)/(r+s+2).
+    expectation = (r + 2 * base_rate) / (r + s + 2)
     uncertainty = 2 / (r + s + 2)
     top_witness_share = max_count / total_entries
 
