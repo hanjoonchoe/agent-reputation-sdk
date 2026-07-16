@@ -9,7 +9,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 [![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/tests-205%20passing%20%C2%B7%203%20languages%20%C2%B7%201%20contract-success)](conformance/)
+[![Tests](https://img.shields.io/badge/tests-236%20passing%20%C2%B7%203%20languages%20%C2%B7%201%20contract-success)](conformance/)
+[![npm](https://img.shields.io/badge/npm-agent--reputation%400.2.0-CB3837)](https://www.npmjs.com/package/agent-reputation)
+[![PyPI](https://img.shields.io/badge/PyPI-web3--agent--reputation%400.2.0-3775A9)](https://pypi.org/project/web3-agent-reputation/)
+[![crates.io](https://img.shields.io/badge/crates.io-alloy--agent--reputation%400.2.0-E43717)](https://crates.io/crates/alloy-agent-reputation)
 [![Golden vectors](https://img.shields.io/badge/golden--vectors-cross--language-orange)](vectors/)
 [![ERC-8004](https://img.shields.io/badge/standard-ERC--8004-627EEA)](https://eips.ethereum.org/EIPS/eip-8004)
 [![web3-agents-mcp](https://img.shields.io/badge/sibling-web3--agents--mcp-8A2BE2)](https://github.com/hanjoonchoe/web3-agents-mcp)
@@ -93,7 +96,7 @@ rep = calculate_reputation(feedback, witness_cap=1)
 
 ```toml
 [dependencies]
-alloy-agent-reputation = "0.1"
+alloy-agent-reputation = "0.2"
 ```
 
 ```rust
@@ -137,11 +140,11 @@ see [Design principles](#-design-principles).
 
 ## 📦 Packages
 
-| Language   | Host SDK                                                 | Package                                             | Status                                     |
-| ---------- | -------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------ |
-| TypeScript | [viem](https://viem.sh) actions                          | [`agent-reputation`](packages/ts) (npm)             | **implemented** — claimed, releasing 0.1.0 |
-| Python     | [web3.py](https://web3py.readthedocs.io) external module | [`web3-agent-reputation`](packages/py) (PyPI)       | **implemented** — claimed, releasing 0.1.0 |
-| Rust       | [alloy](https://alloy.rs) extension trait                | [`alloy-agent-reputation`](packages/rs) (crates.io) | **implemented** — releasing 0.1.0          |
+| Language   | Host SDK                                                 | Package                                             | Status                       |
+| ---------- | -------------------------------------------------------- | --------------------------------------------------- | ---------------------------- |
+| TypeScript | [viem](https://viem.sh) actions                          | [`agent-reputation`](https://www.npmjs.com/package/agent-reputation) (npm)             | **published — v0.2.0** |
+| Python     | [web3.py](https://web3py.readthedocs.io) external module | [`web3-agent-reputation`](https://pypi.org/project/web3-agent-reputation/) (PyPI)       | **published — v0.2.0** |
+| Rust       | [alloy](https://alloy.rs) extension trait                | [`alloy-agent-reputation`](https://crates.io/crates/alloy-agent-reputation) (crates.io) | **published — v0.2.0** |
 
 All three pass the same [golden vectors](vectors/) and the same
 [conformance suite](conformance/) — see [CHANGELOG.md](CHANGELOG.md) for the
@@ -244,12 +247,15 @@ Project layout:
 
 ## 📊 Status
 
-**v0.1.0 — three languages, one contract.** All three packages — `agent-reputation`
-(npm), `web3-agent-reputation` (PyPI), `alloy-agent-reputation` (crates.io) — implement
-the same facts + calculator layers and pass the same golden vectors and conformance
-suite (205 tests across the three languages, one shared contract). See the
-[Packages](#-packages) table for per-registry release status and
-[CHANGELOG.md](CHANGELOG.md) for the full history.
+**v0.2.0 — published to all three registries.** `agent-reputation` (npm),
+`web3-agent-reputation` (PyPI), and `alloy-agent-reputation` (crates.io) implement the
+same facts + calculator layers and pass the same golden vectors and conformance suite
+(236 tests across the three languages, one shared contract). 0.2.0 adds a **base rate**
+policy field (`baseRate`, the fourth term of Jøsang's opinion) and **`shouldEscalate`**,
+a pure sufficiency/concentration gate outside the calculator — both backward-compatible
+(every 0.1.0 golden vector reproduces unchanged). See [CHANGELOG.md](CHANGELOG.md) for
+the full history and [`docs/THEORY.md`](docs/THEORY.md) §3.1 for the Cheng–Friedman
+impossibility result that bounds what those gates can promise.
 
 ## 🔗 Sibling project
 
