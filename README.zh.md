@@ -9,7 +9,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 [![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/tests-205%20passing%20%C2%B7%203%20languages%20%C2%B7%201%20contract-success)](conformance/)
+[![Tests](https://img.shields.io/badge/tests-236%20passing%20%C2%B7%203%20languages%20%C2%B7%201%20contract-success)](conformance/)
+[![npm](https://img.shields.io/badge/npm-agent--reputation%400.2.0-CB3837)](https://www.npmjs.com/package/agent-reputation)
+[![PyPI](https://img.shields.io/badge/PyPI-web3--agent--reputation%400.2.0-3775A9)](https://pypi.org/project/web3-agent-reputation/)
+[![crates.io](https://img.shields.io/badge/crates.io-alloy--agent--reputation%400.2.0-E43717)](https://crates.io/crates/alloy-agent-reputation)
 [![Golden vectors](https://img.shields.io/badge/golden--vectors-cross--language-orange)](vectors/)
 [![ERC-8004](https://img.shields.io/badge/standard-ERC--8004-627EEA)](https://eips.ethereum.org/EIPS/eip-8004)
 [![web3-agents-mcp](https://img.shields.io/badge/sibling-web3--agents--mcp-8A2BE2)](https://github.com/hanjoonchoe/web3-agents-mcp)
@@ -92,7 +95,7 @@ rep = calculate_reputation(feedback, witness_cap=1)
 
 ```toml
 [dependencies]
-alloy-agent-reputation = "0.1"
+alloy-agent-reputation = "0.2"
 ```
 
 ```rust
@@ -139,9 +142,9 @@ const rep = calculateReputation(feedback, {
 
 | 语言       | 宿主 SDK                                                 | 软件包                                              | 状态                                    |
 | ---------- | -------------------------------------------------------- | --------------------------------------------------- | --------------------------------------- |
-| TypeScript | [viem](https://viem.sh) actions                          | [`agent-reputation`](packages/ts) (npm)             | **已实现** —— 名称已占用,即将发布 0.1.0 |
-| Python     | [web3.py](https://web3py.readthedocs.io) external module | [`web3-agent-reputation`](packages/py) (PyPI)       | **已实现** —— 名称已占用,即将发布 0.1.0 |
-| Rust       | [alloy](https://alloy.rs) extension trait                | [`alloy-agent-reputation`](packages/rs) (crates.io) | **已实现** —— 即将发布 0.1.0            |
+| TypeScript | [viem](https://viem.sh) actions                          | [`agent-reputation`](https://www.npmjs.com/package/agent-reputation) (npm)             | **已发布 —— v0.2.0** |
+| Python     | [web3.py](https://web3py.readthedocs.io) external module | [`web3-agent-reputation`](https://pypi.org/project/web3-agent-reputation/) (PyPI)       | **已发布 —— v0.2.0** |
+| Rust       | [alloy](https://alloy.rs) extension trait                | [`alloy-agent-reputation`](https://crates.io/crates/alloy-agent-reputation) (crates.io) | **已发布 —— v0.2.0** |
 
 三个软件包均通过了相同的[黄金向量](vectors/)与相同的[一致性测试套件](conformance/)
 —— 各版本详情见 [CHANGELOG.md](CHANGELOG.md)。
@@ -236,11 +239,14 @@ pnpm -r build         # 将 TypeScript 编译到 dist/
 
 ## 📊 状态
 
-**v0.1.0 —— 三种语言,一份契约。** `agent-reputation`(npm)、
+**v0.2.0 —— 已发布至三个注册表。** `agent-reputation`(npm)、
 `web3-agent-reputation`(PyPI)、`alloy-agent-reputation`(crates.io)三个
 软件包都实现了相同的事实层 + 计算器层,并通过了相同的黄金向量与一致性测试套件
-(三种语言合计 205 个测试,共享同一份契约)。各注册表的发布状态见
-[软件包](#-软件包)表,完整历史见 [CHANGELOG.md](CHANGELOG.md)。
+(三种语言合计 236 个测试,共享同一份契约)。0.2.0 新增了**基准率(base rate)**
+策略字段(`baseRate`,Jøsang 意见的第四项)以及位于计算器之外的纯充分性/集中度门控
+**`shouldEscalate`**(二者均向后兼容,所有 0.1.0 黄金向量原样复现)。完整历史见
+[CHANGELOG.md](CHANGELOG.md),界定这些门控能力上限的 Cheng–Friedman 不可能性结果见
+[`docs/THEORY.md`](docs/THEORY.md) §3.1。
 
 ## 🔗 姊妹项目
 

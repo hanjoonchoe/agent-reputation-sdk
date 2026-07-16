@@ -9,7 +9,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node >= 20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 [![Python >= 3.10](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://www.python.org)
-[![Tests](https://img.shields.io/badge/tests-205%20passing%20%C2%B7%203%20languages%20%C2%B7%201%20contract-success)](conformance/)
+[![Tests](https://img.shields.io/badge/tests-236%20passing%20%C2%B7%203%20languages%20%C2%B7%201%20contract-success)](conformance/)
+[![npm](https://img.shields.io/badge/npm-agent--reputation%400.2.0-CB3837)](https://www.npmjs.com/package/agent-reputation)
+[![PyPI](https://img.shields.io/badge/PyPI-web3--agent--reputation%400.2.0-3775A9)](https://pypi.org/project/web3-agent-reputation/)
+[![crates.io](https://img.shields.io/badge/crates.io-alloy--agent--reputation%400.2.0-E43717)](https://crates.io/crates/alloy-agent-reputation)
 [![Golden vectors](https://img.shields.io/badge/golden--vectors-cross--language-orange)](vectors/)
 [![ERC-8004](https://img.shields.io/badge/standard-ERC--8004-627EEA)](https://eips.ethereum.org/EIPS/eip-8004)
 [![web3-agents-mcp](https://img.shields.io/badge/sibling-web3--agents--mcp-8A2BE2)](https://github.com/hanjoonchoe/web3-agents-mcp)
@@ -93,7 +96,7 @@ rep = calculate_reputation(feedback, witness_cap=1)
 
 ```toml
 [dependencies]
-alloy-agent-reputation = "0.1"
+alloy-agent-reputation = "0.2"
 ```
 
 ```rust
@@ -140,9 +143,9 @@ const rep = calculateReputation(feedback, {
 
 | 언어       | 호스트 SDK                                               | 패키지                                              | 상태                                         |
 | ---------- | -------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------- |
-| TypeScript | [viem](https://viem.sh) actions                          | [`agent-reputation`](packages/ts) (npm)             | **구현 완료** — 이름 확보, 0.1.0 릴리스 예정 |
-| Python     | [web3.py](https://web3py.readthedocs.io) external module | [`web3-agent-reputation`](packages/py) (PyPI)       | **구현 완료** — 이름 확보, 0.1.0 릴리스 예정 |
-| Rust       | [alloy](https://alloy.rs) extension trait                | [`alloy-agent-reputation`](packages/rs) (crates.io) | **구현 완료** — 0.1.0 릴리스 예정            |
+| TypeScript | [viem](https://viem.sh) actions                          | [`agent-reputation`](https://www.npmjs.com/package/agent-reputation) (npm)             | **배포됨 — v0.2.0** |
+| Python     | [web3.py](https://web3py.readthedocs.io) external module | [`web3-agent-reputation`](https://pypi.org/project/web3-agent-reputation/) (PyPI)       | **배포됨 — v0.2.0** |
+| Rust       | [alloy](https://alloy.rs) extension trait                | [`alloy-agent-reputation`](https://crates.io/crates/alloy-agent-reputation) (crates.io) | **배포됨 — v0.2.0** |
 
 세 패키지 모두 동일한 [골든 벡터](vectors/)와 동일한 [정합성 스위트](conformance/)를
 통과합니다 — 릴리스별 세부 내용은 [CHANGELOG.md](CHANGELOG.md)를 참고하세요.
@@ -244,11 +247,14 @@ pnpm -r build         # TypeScript를 dist/로 컴파일
 
 ## 📊 상태
 
-**v0.1.0 — 세 언어, 하나의 계약.** `agent-reputation`(npm), `web3-agent-reputation`
+**v0.2.0 — 세 레지스트리에 배포 완료.** `agent-reputation`(npm), `web3-agent-reputation`
 (PyPI), `alloy-agent-reputation`(crates.io) 세 패키지 모두 동일한 사실 + 계산기
-계층을 구현하며, 동일한 골든 벡터와 정합성 스위트(세 언어 합쳐 205개 테스트, 하나의
-공유 계약)를 통과합니다. 레지스트리별 릴리스 상태는 [패키지](#-패키지) 표를,
-전체 이력은 [CHANGELOG.md](CHANGELOG.md)를 참고하세요.
+계층을 구현하며, 동일한 골든 벡터와 정합성 스위트(세 언어 합쳐 236개 테스트, 하나의
+공유 계약)를 통과합니다. 0.2.0은 **기저율(base rate)** 정책 필드(`baseRate`, Jøsang
+의견의 네 번째 항)와 계산기 밖의 순수 충분성/집중도 게이트 **`shouldEscalate`**를
+추가했으며, 둘 다 하위 호환입니다(모든 0.1.0 골든 벡터가 그대로 재현). 전체 이력은
+[CHANGELOG.md](CHANGELOG.md)를, 이 게이트들의 한계를 규정하는 Cheng–Friedman 불가능성
+결과는 [`docs/THEORY.md`](docs/THEORY.md) §3.1을 참고하세요.
 
 ## 🔗 자매 프로젝트
 
